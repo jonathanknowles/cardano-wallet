@@ -6,14 +6,15 @@ env:
   SCRATCH_DIR: "/scratch/cardano-wallet"
 
 steps:
-  - label: 'Restore benchmark - cardano mainnet'
-    command: "./.buildkite/bench-restore.sh mainnet"
-    env:
-      HOME: "/cache/cardano-wallet.home"
-    timeout_in_minutes: 600
-    agents:
-      system: x86_64-linux
-      queue: benchmark
+# tmp
+  #  - label: 'Restore benchmark - cardano mainnet'
+  #    command: "./.buildkite/bench-restore.sh mainnet"
+  #    env:
+  #      HOME: "/cache/cardano-wallet.home"
+  #    timeout_in_minutes: 600
+  #    agents:
+  #      system: x86_64-linux
+  #      queue: benchmark
 
 # Temporary disabled due to timing out (#2221)
 #  - label: 'Restore benchmark - cardano testnet'
@@ -25,33 +26,50 @@ steps:
 #      system: x86_64-linux
 #      queue: benchmark
 
-  - label: 'Database benchmark'
-    command: "./.buildkite/bench-db.sh"
-    timeout_in_minutes: 120
+  #  - label: 'Database benchmark'
+  #    command: "./.buildkite/bench-db.sh"
+  #    timeout_in_minutes: 120
+  #    agents:
+  #      system: x86_64-linux
+  #      queue: benchmark
+  #
+  - label: 'Repeated integration'
+    command: "nix-build -A checks.cardano-wallet.integration --no-out-link"
+    timeout_in_minutes: 360
+    env:
+      HOME: "/cache/cardano-wallet.home"
+      CARDANO_WALLET_INTEGRATION_TEST_REPETITIONS: 7
     agents:
       system: x86_64-linux
-      queue: benchmark
 
-  - label: 'Latency benchmark'
-    command: "./.buildkite/bench-latency.sh"
-    timeout_in_minutes: 120
+  - label: 'Extensive unit tests'
+    command: "nix-build -A checks.cardano-wallet-core.unit --no-out-link"
+    timeout_in_minutes: 360
+    env:
+      HOME: "/cache/cardano-wallet.home"
+      HSPEC_OPTIONS: "--qc-max-success=200"
     agents:
       system: x86_64-linux
-      queue: benchmark
 
-  # TODO: ADP-549 Port migrations test to shelley
-  # - label: 'Database Migrations Test'
-  #   commands:
-  #     - "rm -rf state-migration-test*"
-  #     - "nix-build nix/migration-tests.nix -o migration-tests"
-  #     - "./migration-tests/runall.sh"
-  #   timeout_in_minutes: 60
-  #   agents:
-  #     system: x86_64-linux
-
-  - wait
-
-  - label: "Advance linux-tests-pass and all-tests-pass branches"
-    command: "./.buildkite/push-branch.sh linux-tests-pass windows-tests-pass all-tests-pass"
-    agents:
-      system: x86_64-linux
+      #  - label: 'Latency benchmark'
+      #    command: "./.buildkite/bench-latency.sh"
+      #    timeout_in_minutes: 120
+      #    agents:
+      #      system: x86_64-linux
+      #      queue: benchmark
+      #
+      #  - label: 'Database Migrations Test'
+      #    commands:
+      #      - "rm -rf state-migration-test*"
+      #      - "nix-build nix/migration-tests.nix -o migration-tests"
+      #      - "./migration-tests/runall.sh"
+      #    timeout_in_minutes: 60
+      #    agents:
+      #      system: x86_64-linux
+      #
+      #  - wait
+      #
+      #  - label: "Advance linux-tests-pass and all-tests-pass branches"
+      #    command: "./.buildkite/push-branch.sh linux-tests-pass windows-tests-pass all-tests-pass"
+      #    agents:
+      #      system: x86_64-linux

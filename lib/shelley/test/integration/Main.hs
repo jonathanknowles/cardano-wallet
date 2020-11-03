@@ -55,6 +55,7 @@ import Cardano.Wallet.Shelley.Launch
     ( ClusterLog
     , RunningNode (..)
     , moveInstantaneousRewardsTo
+    , newClusterSetupFaucet
     , nodeMinSeverityFromEnv
     , oneMillionAda
     , poolConfigsFromEnv
@@ -75,6 +76,8 @@ import Control.Concurrent.MVar
     ( newEmptyMVar, putMVar, takeMVar )
 import Control.Exception
     ( throwIO )
+import Control.Monad
+    ( replicateM )
 import Control.Monad.IO.Class
     ( liftIO )
 import Control.Tracer
@@ -93,14 +96,18 @@ import Network.HTTP.Client
     , newManager
     , responseTimeoutMicro
     )
+import System.Environment
+    ( getArgs, lookupEnv, withArgs )
 import System.FilePath
     ( (</>) )
 import System.IO
     ( BufferMode (..), hSetBuffering, stdout )
 import Test.Hspec
-    ( Spec, SpecWith, describe, hspec, parallel )
+    ( Spec, SpecWith, describe, parallel )
 import Test.Hspec.Extra
     ( aroundAll )
+import Test.Hspec.Runner
+    ( defaultConfig, evaluateSummary, readConfig, runSpec )
 import Test.Integration.Faucet
     ( genRewardAccounts, mirMnemonics, shelleyIntegrationTestFunds )
 import Test.Integration.Framework.Context
@@ -145,7 +152,12 @@ main :: forall t n . (t ~ Shelley, n ~ 'Mainnet) => IO ()
 main = withUtf8Encoding $ withTracers $ \tracers -> do
     hSetBuffering stdout LineBuffering
     nix <- inNixBuild
-    hspec $ do
+
+    -- Repeat to detect flaky tests if on nightly.
+    repetitions <- maybe 1 read
+        <$> lookupEnv "CARDANO_WALLET_INTEGRATION_TEST_REPETITIONS"
+
+    repeatedHspec repetitions $ do
         describe "No backend required" $
             parallelIf (not nix) $ describe "Miscellaneous CLI tests" $
                 MiscellaneousCLI.spec @t
@@ -186,6 +198,14 @@ main = withUtf8Encoding $ withTracers $ \tracers -> do
   where
     parallelIf :: forall a. Bool -> SpecWith a -> SpecWith a
     parallelIf flag = if flag then parallel else id
+
+    -- Runs a @Spec@ in /sequence/ n times, and at the end, concatenates the
+    -- results.
+    repeatedHspec n spec =
+          getArgs
+      >>= readConfig defaultConfig
+      >>= withArgs [] . fmap mconcat . replicateM n . runSpec spec
+      >>= evaluateSummary
 
 specWithServer
     :: (Tracer IO TestsLog, Tracers IO)
@@ -247,32 +267,36 @@ specWithServer (tr, tracers) = aroundAll withContext
                     atomicModifyIORef' eventsRef ((, ()) . (event :))
                 pure certificates
 
-    withServer dbDecorator action = bracketTracer' tr "withServer" $ withSMASH tr' $ do
-        minSev <- nodeMinSeverityFromEnv
-        testPoolConfigs <- poolConfigsFromEnv
-        withSystemTempDir tr' "test" $ \dir -> do
-            extraLogDir <- (fmap (,Info)) <$> testLogDirFromEnv
-            withCluster
-                tr'
-                minSev
-                testPoolConfigs
-                dir
-                extraLogDir
-                onByron
-                (afterFork dir)
-                (onClusterStart action dir dbDecorator)
+    withServer dbDecorator action =
+        bracketTracer' tr "withServer" $  do
+            setupFaucet <- newClusterSetupFaucet tr'
+            withSMASH tr' setupFaucet $ do
+                minSev <- nodeMinSeverityFromEnv
+                testPoolConfigs <- poolConfigsFromEnv
+                withSystemTempDir tr' "test" $ \dir -> do
+                    extraLogDir <- (fmap (,Info)) <$> testLogDirFromEnv
+                    withCluster
+                        tr'
+                        minSev
+                        testPoolConfigs
+                        dir
+                        extraLogDir
+                        setupFaucet
+                        onByron
+                        (afterFork dir setupFaucet)
+                        (onClusterStart action dir dbDecorator)
 
     tr' = contramap MsgCluster tr
     onByron _ = pure ()
-    afterFork dir _ = do
+    afterFork dir setupFaucet _ = do
         traceWith tr MsgSettingUpFaucet
         let encodeAddr = T.unpack . encodeAddress @'Mainnet
         let addresses = map (first encodeAddr) shelleyIntegrationTestFunds
-        sendFaucetFundsTo tr' dir addresses
+        sendFaucetFundsTo tr' dir setupFaucet addresses
 
         let rewards = (,Coin $ fromIntegral oneMillionAda) <$>
                 concatMap genRewardAccounts mirMnemonics
-        moveInstantaneousRewardsTo tr' dir rewards
+        moveInstantaneousRewardsTo tr' dir setupFaucet rewards
 
     onClusterStart
         action dir dbDecorator (RunningNode socketPath block0 (gp, vData)) = do

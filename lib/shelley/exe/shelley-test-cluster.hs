@@ -40,6 +40,7 @@ import Cardano.Wallet.Shelley.Launch
     ( ClusterLog (..)
     , RunningNode (..)
     , moveInstantaneousRewardsTo
+    , newClusterSetupFaucet
     , nodeMinSeverityFromEnv
     , oneMillionAda
     , poolConfigsFromEnv
@@ -206,32 +207,39 @@ main = do
             ]
 
     poolConfigs <- poolConfigsFromEnv
+
     withUtf8Encoding
         $ withLoggingNamed "cardano-wallet" walletLogs
         $ \(_, trWallet) -> withLoggingNamed "test-cluster" clusterLogs
-        $ \(_, trCluster) -> withSystemTempDir (trMessageText trCluster) "testCluster"
-        $ \dir -> withTempDir (trMessageText trCluster) dir "wallets"
-        $ \db -> withCluster
-            (contramap MsgCluster $ trMessageText trCluster)
-            nodeMinSeverity
-            poolConfigs
-            dir
-            Nothing
-            whenByron
-            (whenShelley dir (trMessageText trCluster))
-            (whenReady trWallet (trMessageText trCluster) db)
+        $ \(_, trTests) ->
+            let tr' = trMessageText trTests
+                tr = contramap MsgCluster tr'
+            in withSystemTempDir tr "testCluster"
+        $ \dir -> withTempDir tr dir "wallets"
+        $ \db -> do
+            setupFaucet <- newClusterSetupFaucet tr
+            withCluster
+                tr
+                nodeMinSeverity
+                poolConfigs
+                dir
+                Nothing
+                setupFaucet
+                whenByron
+                (whenShelley dir tr' setupFaucet)
+                (whenReady trWallet tr' db)
   where
     whenByron _ = pure ()
 
-    whenShelley dir trCluster _ = do
-        traceWith trCluster MsgSettingUpFaucet
-        let trCluster' = contramap MsgCluster trCluster
+    whenShelley dir tr' setupFaucet _ = do
+        traceWith tr' MsgSettingUpFaucet
+        let tr = contramap MsgCluster tr'
         let encodeAddr = T.unpack . encodeAddress @'Mainnet
         let addresses = map (first encodeAddr) shelleyIntegrationTestFunds
         let accts = concatMap genRewardAccounts mirMnemonics
         let rewards = (,Coin $ fromIntegral oneMillionAda) <$> accts
-        sendFaucetFundsTo trCluster' dir addresses
-        moveInstantaneousRewardsTo trCluster' dir rewards
+        sendFaucetFundsTo tr dir setupFaucet addresses
+        moveInstantaneousRewardsTo tr dir setupFaucet rewards
 
     whenReady tr trCluster db (RunningNode socketPath block0 (gp, vData)) = do
         let tracers = setupTracers (tracerSeverities (Just Info)) tr

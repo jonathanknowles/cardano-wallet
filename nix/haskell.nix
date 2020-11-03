@@ -104,7 +104,10 @@ let
             echo "Git revision is ${toString gitrev}"
           '' + lib.optionalString stdenv.isDarwin ''
             export TMPDIR=/tmp
-          '';
+          '' + (lib.concatMapStrings
+            # pass some environment variables through
+            (env: let val = builtins.getEnv env; in lib.optionalString (val != "") "export ${env}=${val}\n")
+            ["CARDANO_WALLET_INTEGRATION_TEST_REPETITIONS"]);
 
           integration.postCheck = ''
             # fixme: There needs to be some Haskell.nix changes to
@@ -160,6 +163,11 @@ let
         # and add shell completions for main executables.
         packages.cardano-wallet.components.exes.cardano-wallet.postInstall = optparseCompletionPostInstall + libSodiumPostInstall;
         packages.cardano-wallet-core.components.tests.unit.postInstall = libSodiumPostInstall;
+        packages.cardano-wallet-core.components.tests.unit.preCheck =
+            lib.concatMapStrings
+            # pass some environment variables through
+            (env: let val = builtins.getEnv env; in lib.optionalString (val != "") "export ${env}=${val}\n")
+            ["HSPEC_OPTIONS"];
         packages.cardano-wallet-cli.components.tests.unit.postInstall = libSodiumPostInstall;
       }
 

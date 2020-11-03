@@ -148,7 +148,7 @@ buildStep dryRun bk nightly = do
       titled "Build"
         (build Fast (["--test", "--no-run-tests"] ++ cabalFlags)) .&&.
       titled "Test"
-        (timeout 60 (test Fast cabalFlags)) .&&.
+        (timeout (4*60) (test Fast cabalFlags)) .&&.
       titled "Checking golden test files"
         (checkUnclean dryRun "lib/core/test/data")
   where
@@ -156,8 +156,6 @@ buildStep dryRun bk nightly = do
         run dryRun "stack" $ concat
             [ color "always"
             , [ "build" ]
-            , [ "--bench" ]
-            , [ "--no-run-benchmarks" ]
             , [ "--haddock" ]
             , [ "--haddock-internal" ]
             , [ "--no-haddock-deps" ]
