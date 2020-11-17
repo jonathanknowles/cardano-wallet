@@ -145,7 +145,7 @@ spec = do
 
     describe "fee calculations" $ do
         let policy :: FeePolicy
-            policy = LinearFee (Quantity 100_000) (Quantity 100) (Quantity 0)
+            policy = LinearFee (Quantity 100_000) (Quantity 100)
 
             minFee :: Maybe TxMetadata -> CoinSelection -> Integer
             minFee md = fromIntegral . getFee . minimumFee tl policy Nothing md
@@ -198,9 +198,9 @@ spec = do
                     CS.random testCoinSelOpts recipients wdrl utxo
                 withExceptT ErrSelectForPaymentFee $
                     (Fee . CS.feeBalance) <$> adjustForFee testFeeOpts utxo' sel
-        res <- runExceptT $ estimateFeeForCoinSelection selectCoins
+        res <- runExceptT $ estimateFeeForCoinSelection Nothing selectCoins
 
-        res `shouldBe` Right (FeeEstimation 166029 166029)
+        res `shouldBe` Right (FeeEstimation 166029 166029 Nothing)
 
     -- fixme: it would be nice to repeat the tests for multiple eras
     let era = Cardano.ShelleyBasedEraAllegra
@@ -480,7 +480,7 @@ testFeeOpts :: FeeOptions
 testFeeOpts = feeOpts testTxLayer Nothing Nothing txParams (Coin 0) mempty
   where
     txParams  = TxParameters feePolicy txMaxSize
-    feePolicy = LinearFee (Quantity 155381) (Quantity 44) (Quantity 0)
+    feePolicy = LinearFee (Quantity 155381) (Quantity 44)
     txMaxSize = Quantity maxBound
 
 testTxLayer :: TransactionLayer (IO ShelleyEra) ShelleyKey

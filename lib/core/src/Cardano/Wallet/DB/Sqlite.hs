@@ -191,7 +191,7 @@ import Database.Persist.Sql
 import Database.Persist.Sqlite
     ( SqlPersistT )
 import Database.Persist.Types
-    ( PersistValue (PersistText), fromPersistValueText )
+    ( PersistValue (PersistNull, PersistText), fromPersistValueText )
 import Fmt
     ( pretty )
 import Numeric.Natural
@@ -381,6 +381,8 @@ migrateManually tr proxy defaultFieldValues =
         addSeqStateDerivationPrefixIfMissing conn
 
         renameAccountingStyle conn
+
+        updateFeeValueAndAddKeyDeposit conn
   where
     -- NOTE
     -- Wallets created before the 'PassphraseScheme' was introduced have no
@@ -569,6 +571,108 @@ migrateManually tr proxy defaultFieldValues =
         renameColumn conn (DBField SeqStateAddressAccountingStyle)
             "u_tx_o_external" "utxo_external"
 
+
+    -- | Since key deposit and fee value are intertwined, we migrate them both
+    -- here.
+    updateFeeValueAndAddKeyDeposit :: Sqlite.Connection -> IO ()
+    updateFeeValueAndAddKeyDeposit conn = do
+        let field = (DBField ProtocolParametersFeePolicy)
+            defaultValue = "0 + 0x"
+
+        isFieldPresent conn field >>= \case
+            TableMissing ->
+                traceWith tr $ MsgManualMigrationNotNeeded field
+            ColumnMissing -> do
+                -- there are no fee values, so we don't know anything about
+                -- the key deposit and must add a default value
+                addKeyDepositIfMissing
+
+                traceWith tr $ MsgManualMigrationNeeded field defaultValue
+                query <- Sqlite.prepare conn $ T.unwords
+                    [ "ALTER TABLE", tableName field
+                    , "ADD COLUMN", fieldName field
+                    , fieldType field, "NOT NULL"
+                    , "DEFAULT", defaultValue
+                    , ";"
+                    ]
+                _ <- Sqlite.step query
+                Sqlite.finalize query
+
+            -- adding key deposit in this case can be delayed, because we
+            -- can pull out the info from the fee values
+            ColumnPresent -> do
+                fee_policyInfo <- Sqlite.prepare conn $ T.unwords
+                    [ "SELECT"
+                    , fieldName field
+                    , "FROM"
+                    , tableName field
+                    , ";"
+                    ]
+                row <- Sqlite.step fee_policyInfo
+                    >> Sqlite.columns fee_policyInfo
+                Sqlite.finalize fee_policyInfo
+                case filter (/= PersistNull) row of
+                    [PersistText t] -> do
+                        traceWith tr $ MsgManualMigrationNeeded field t
+                        (a:b:rest) <- pure (T.splitOn " + " t)
+
+                        -- update fee policy
+                        let newVal = a <> " + " <> b
+                        query <- Sqlite.prepare conn $ T.unwords
+                            [ "UPDATE"
+                            , tableName field
+                            , "SET"
+                            , fieldName field
+                            , "= '" <> newVal <> "'"
+                            , ";"
+                            ]
+                        Sqlite.step query *> Sqlite.finalize query
+
+                        -- update key deposit
+                        case rest of
+                            [c] -> updateKeyDeposit c
+                            _ -> pure ()
+
+                    [] -> addKeyDepositIfMissing
+                    xs -> fail ("Unexpected row result when querying fee value: " <> show xs)
+      where
+        -- | Adds a 'key_deposit column to the 'protocol_parameters'
+        -- table if it is missing.
+        --
+        addKeyDepositIfMissing :: IO ()
+        addKeyDepositIfMissing = do
+            addColumn_ conn True (DBField ProtocolParametersKeyDeposit) value
+          where
+            value = toText $ defaultKeyDeposit defaultFieldValues
+
+        updateKeyDeposit
+            :: Text  -- ^ e.g. "2000000.0y"
+            -> IO ()
+        updateKeyDeposit c = do
+            -- convert to coin
+            (Right stakeKeyVal) <- pure $ (W.Coin . round)
+                <$> fromText @Double (T.dropEnd 1 c)
+
+            isFieldPresent conn stakeField >>= \case
+                TableMissing ->
+                    -- this invariant must hold due to the parent context
+                    fail "ProtocolParameters table missing"
+                ColumnMissing -> do
+                    addColumn_ conn True stakeField (toText stakeKeyVal)
+                ColumnPresent -> do
+                    -- update stake key deposit
+                    query' <- Sqlite.prepare conn $ T.unwords
+                        [ "UPDATE"
+                        , tableName stakeField
+                        , "SET"
+                        , fieldName stakeField
+                        , "= '" <> toText stakeKeyVal <> "'"
+                        , ";"
+                        ]
+                    Sqlite.step query' *> Sqlite.finalize query'
+          where
+            stakeField = DBField ProtocolParametersKeyDeposit
+
     -- | Determines whether a field is present in its parent table.
     isFieldPresent :: Sqlite.Connection -> DBField -> IO SqlColumnStatus
     isFieldPresent conn field = do
@@ -656,6 +760,7 @@ data DefaultFieldValues = DefaultFieldValues
     , defaultDesiredNumberOfPool :: Word16
     , defaultMinimumUTxOValue :: W.Coin
     , defaultHardforkEpoch :: Maybe W.EpochNo
+    , defaultKeyDeposit :: W.Coin
     }
 
 -- | Sets up a connection to the SQLite database.
@@ -1328,7 +1433,7 @@ mkProtocolParametersEntity
     -> W.ProtocolParameters
     -> ProtocolParameters
 mkProtocolParametersEntity wid pp =
-    ProtocolParameters wid fp (getQuantity mx) dl desiredPoolNum minUTxO epochNo
+    ProtocolParameters wid fp (getQuantity mx) dl desiredPoolNum minUTxO keyDep epochNo
   where
     (W.ProtocolParameters
         (W.DecentralizationLevel dl)
@@ -1336,18 +1441,20 @@ mkProtocolParametersEntity wid pp =
         desiredPoolNum
         minUTxO
         epochNo
+        keyDep
         ) = pp
 
 protocolParametersFromEntity
     :: ProtocolParameters
     -> W.ProtocolParameters
-protocolParametersFromEntity (ProtocolParameters _ fp mx dl poolNum minUTxO epochNo) =
+protocolParametersFromEntity (ProtocolParameters _ fp mx dl poolNum minUTxO keyDep epochNo) =
     W.ProtocolParameters
         (W.DecentralizationLevel dl)
         (W.TxParameters fp (Quantity mx))
         poolNum
         minUTxO
         epochNo
+        keyDep
 
 {-------------------------------------------------------------------------------
                                    DB Queries

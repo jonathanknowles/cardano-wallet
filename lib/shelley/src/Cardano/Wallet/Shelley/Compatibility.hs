@@ -562,6 +562,7 @@ fromShelleyPParams bound pp = W.ProtocolParameters
         desiredNumberOfStakePoolsFromPParams pp
     , minimumUTxOvalue =
         minimumUTxOvalueFromPParams pp
+    , stakeKeyDeposit = stakeKeyDepositFromPParams pp
     , hardforkEpochNo = fromBound <$> bound
     }
   where
@@ -604,15 +605,11 @@ txParametersFromPParams pp = W.TxParameters
     { getFeePolicy = W.LinearFee
         (Quantity (naturalToDouble (SL._minfeeB pp)))
         (Quantity (naturalToDouble (SL._minfeeA pp)))
-        (Quantity (coinToDouble (SL._keyDeposit pp)))
     , getTxMaxSize = fromMaxTxSize $ SL._maxTxSize pp
     }
   where
     naturalToDouble :: Natural -> Double
     naturalToDouble = fromIntegral
-
-    coinToDouble :: SL.Coin -> Double
-    coinToDouble (SL.Coin c) = fromIntegral c
 
 desiredNumberOfStakePoolsFromPParams
     :: SL.PParams era
@@ -622,7 +619,12 @@ desiredNumberOfStakePoolsFromPParams pp = fromIntegral (SL._nOpt pp)
 minimumUTxOvalueFromPParams
     :: SL.PParams era
     -> W.Coin
-minimumUTxOvalueFromPParams pp = toWalletCoin $ SL._minUTxOValue pp
+minimumUTxOvalueFromPParams = toWalletCoin . SL._minUTxOValue
+
+stakeKeyDepositFromPParams
+    :: SL.PParams era
+    -> W.Coin
+stakeKeyDepositFromPParams = toWalletCoin . SL._keyDeposit
 
 -- | Convert genesis data into blockchain params and an initial set of UTxO
 fromGenesisData

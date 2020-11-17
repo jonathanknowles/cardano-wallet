@@ -127,7 +127,7 @@ spec = describe "SHELLEY_CLI_TRANSACTIONS" $ do
         let amt = fromIntegral minUTxOValue
         args <- postTxArgs ctx wSrc wDest amt Nothing Nothing
         Stdout feeOut <- postTransactionFeeViaCLI @t ctx args
-        ApiFee (Quantity feeMin) (Quantity feeMax) <- expectValidJSON Proxy feeOut
+        ApiFee (Quantity feeMin) (Quantity feeMax) [Quantity 0] <- expectValidJSON Proxy feeOut
 
         txJson <- postTxViaCLI ctx wSrc wDest amt Nothing Nothing
         verify txJson
@@ -172,7 +172,7 @@ spec = describe "SHELLEY_CLI_TRANSACTIONS" $ do
                 ]
 
         Stdout feeOut <- postTransactionFeeViaCLI @t ctx args
-        ApiFee (Quantity feeMin) (Quantity feeMax) <- expectValidJSON Proxy feeOut
+        ApiFee (Quantity feeMin) (Quantity feeMax) _ <- expectValidJSON Proxy feeOut
 
         -- post transaction
         (c, out, err) <- postTransactionViaCLI @t ctx "cardano-wallet" args
@@ -320,7 +320,7 @@ spec = describe "SHELLEY_CLI_TRANSACTIONS" $ do
 
         args <- postTxArgs ctx wSrc wDest amt md Nothing
         Stdout feeOut <- postTransactionFeeViaCLI @t ctx args
-        ApiFee (Quantity feeMin) (Quantity feeMax) <- expectValidJSON Proxy feeOut
+        ApiFee (Quantity feeMin) (Quantity feeMax) _ <- expectValidJSON Proxy feeOut
 
         txJson <- postTxViaCLI ctx wSrc wDest amt md Nothing
         verify txJson
@@ -349,7 +349,7 @@ spec = describe "SHELLEY_CLI_TRANSACTIONS" $ do
 
       args <- postTxArgs ctx wSrc wDest amt Nothing ttl
       Stdout feeOut <- postTransactionFeeViaCLI @t ctx args
-      ApiFee (Quantity feeMin) (Quantity feeMax) <- expectValidJSON Proxy feeOut
+      ApiFee (Quantity feeMin) (Quantity feeMax) _ <- expectValidJSON Proxy feeOut
 
       txJson <- postTxViaCLI ctx wSrc wDest amt Nothing ttl
       verify txJson

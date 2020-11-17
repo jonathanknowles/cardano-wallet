@@ -42,6 +42,8 @@ import Cardano.Wallet.Primitive.Types
     ( PoolId, SlotNo (..) )
 import Cardano.Wallet.Primitive.Types.Address
     ( Address (..) )
+import Cardano.Wallet.Primitive.Types.Coin
+    ( Coin (..) )
 import Cardano.Wallet.Primitive.Types.Tx
     ( SealedTx (..), Tx (..), TxMetadata )
 import Data.ByteString
@@ -120,7 +122,7 @@ data TransactionLayer t k = TransactionLayer
         -- The certificate is the public key of the reward account.
 
     , initDelegationSelection
-        :: FeePolicy
+        :: Coin
             -- Current fee policy
         -> DelegationAction
             -- What sort of action is going on

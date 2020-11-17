@@ -168,12 +168,13 @@ mainnetNetworkParameters = W.NetworkParameters
             minBound
         , txParameters = W.TxParameters
             { getFeePolicy =
-                W.LinearFee (Quantity 155381) (Quantity 43.946) (Quantity 0)
+                W.LinearFee (Quantity 155381) (Quantity 43.946)
             , getTxMaxSize =
                 Quantity 4096
             }
         , desiredNumberOfStakePools = 0
         , minimumUTxOvalue = W.Coin 0
+        , stakeKeyDeposit = W.Coin 0
         , hardforkEpochNo = Nothing
         }
     }
@@ -386,7 +387,6 @@ fromTxFeePolicy (TxFeePolicyTxSizeLinear (TxSizeLinear a b)) =
     W.LinearFee
         (Quantity (lovelaceToDouble a))
         (Quantity (rationalToDouble b))
-        (Quantity 0) -- certificates do not exist for Byron
   where
     lovelaceToDouble :: Lovelace -> Double
     lovelaceToDouble = fromIntegral . unsafeGetLovelace
@@ -422,6 +422,7 @@ protocolParametersFromPP bound pp = W.ProtocolParameters
         }
     , desiredNumberOfStakePools = 0
     , minimumUTxOvalue = W.Coin 0
+    , stakeKeyDeposit = W.Coin 0
     , hardforkEpochNo = fromBound <$> bound
     }
   where
