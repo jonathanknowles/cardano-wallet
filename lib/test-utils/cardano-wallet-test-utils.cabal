@@ -44,6 +44,7 @@ library
     , iohk-monitoring
     , process
     , QuickCheck
+    , quickcheck-classes
     , stm
     , template-haskell
     , time
@@ -54,6 +55,7 @@ library
   exposed-modules:
       Test.Hspec.Extra
       Test.Utils.FilePath
+      Test.Utils.Laws
       Test.Utils.Paths
       Test.Utils.Roundtrip
       Test.Utils.StaticServer
