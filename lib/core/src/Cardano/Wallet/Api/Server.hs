@@ -2036,7 +2036,7 @@ mkApiCoinSelection mcerts (UnsignedTx inputs outputs change) =
             { address =
                 (ApiT $ view #address txChange, Proxy @n)
             , amount =
-                Quantity $ fromIntegral $ getCoin $ view #amount txChange
+                Quantity $ fromIntegral $ unCoin $ view #amount txChange
             , derivationPath =
                 ApiT <$> view #derivationPath txChange
             }

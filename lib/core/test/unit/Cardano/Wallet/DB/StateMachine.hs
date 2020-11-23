@@ -637,7 +637,7 @@ generator (Model _ wids) = Just $ frequency $ fmap (fmap At) <$> concat
     genMinWithdrawal :: Gen (Maybe (Quantity "lovelace" Natural))
     genMinWithdrawal = frequency
         [ (10, pure Nothing)
-        , (1, (Just . Quantity . fromIntegral . getCoin) <$> arbitrary)
+        , (1, (Just . Quantity . fromIntegral . unCoin) <$> arbitrary)
         ]
 
 isUnordered :: Ord x => [x] -> Bool

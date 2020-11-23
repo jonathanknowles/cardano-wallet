@@ -132,7 +132,7 @@ addTxOut :: Integral a => a -> TxOut -> a
 addTxOut total = addCoin total . coin
 
 addCoin :: Integral a => a -> Coin -> a
-addCoin total c = total + (fromIntegral (getCoin c))
+addCoin total c = total + (fromIntegral (unCoin c))
 
 data ErrCoinSelection e
     = ErrNotEnoughMoney Word64 Word64
