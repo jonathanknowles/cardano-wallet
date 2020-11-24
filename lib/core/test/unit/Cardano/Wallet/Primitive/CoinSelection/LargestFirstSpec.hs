@@ -24,7 +24,7 @@ import Cardano.Wallet.Primitive.CoinSelectionSpec
 import Cardano.Wallet.Primitive.Types.Coin
     ( Coin (..) )
 import Cardano.Wallet.Primitive.Types.Tx
-    ( TxOut (..) )
+    ( txOutCoin )
 import Cardano.Wallet.Primitive.Types.UTxO
     ( UTxO (..), excluding )
 import Control.Monad
@@ -287,7 +287,7 @@ propInputDecreasingOrder (CoinSelProp utxo wdrl txOuts) =
             getExtremumValue L.minimum (inputs cs)
             `shouldSatisfy`
             (>= (getExtremumValue L.maximum utxo'))
-    getExtremumValue f = f . map (unCoin . coin . snd)
+    getExtremumValue f = f . map (unCoin . txOutCoin . snd)
     selection = runIdentity $ runExceptT $ do
         let opts = CoinSelectionOptions (const 100) noValidation
         largestFirst opts txOuts wdrl utxo

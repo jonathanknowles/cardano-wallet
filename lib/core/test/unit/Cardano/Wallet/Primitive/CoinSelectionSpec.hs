@@ -2,6 +2,8 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
@@ -37,16 +39,16 @@ import Cardano.Wallet.Primitive.Types.Coin
     ( Coin (..) )
 import Cardano.Wallet.Primitive.Types.Hash
     ( Hash (..) )
+import Cardano.Wallet.Primitive.Types.TokenBundleSpec
+    ()
 import Cardano.Wallet.Primitive.Types.Tx
-    ( TxIn (..), TxOut (..), UnsignedTx (..) )
+    ( TxIn (..), TxOut (..), UnsignedTx (..), txOutCoin )
 import Cardano.Wallet.Primitive.Types.UTxO
     ( UTxO (..) )
 import Control.Monad.Trans.Except
     ( ExceptT, runExceptT )
 import Data.List.NonEmpty
     ( NonEmpty (..) )
-import Data.Maybe
-    ( catMaybes )
 import Data.Quantity
     ( Quantity (..) )
 import Data.Vector.Shuffle
@@ -64,7 +66,6 @@ import Test.QuickCheck
     , Confidence (..)
     , Gen
     , Property
-    , applyArbitrary2
     , checkCoverageWith
     , choose
     , counterexample
@@ -79,6 +80,7 @@ import Test.QuickCheck
 import Test.QuickCheck.Monadic
     ( monadicIO )
 
+import qualified Cardano.Wallet.Primitive.Types.TokenBundle as TB
 import qualified Data.ByteString as BS
 import qualified Data.List as L
 import qualified Data.List.NonEmpty as NE
@@ -143,11 +145,11 @@ prop_coinValuesPreserved
 prop_coinValuesPreserved (CoinSelectionsSetup cs addrs) = do
     let sels = getCS <$> cs
     let getCoinValueFromInp =
-            sum . map (\(_, TxOut _ (Coin c)) -> c)
+            sum . map (\(_, TxOut {tokens}) -> unCoin $ TB.getCoin tokens)
     let selsCoinValue =
             sum $ getCoinValueFromInp . inputs . getCS <$> cs
     let getCoinValueFromTxOut (UnsignedTx _ txouts _) =
-            sum $ map (\(TxOut _ (Coin c)) -> c) txouts
+            sum $ map (\(TxOut {tokens}) -> unCoin $ TB.getCoin tokens) txouts
     let txsCoinValue =
             sum . map getCoinValueFromTxOut
     txsCoinValue (assignMigrationAddresses addrs sels) === selsCoinValue
@@ -163,10 +165,10 @@ prop_coinValuesPreservedPerTx
 prop_coinValuesPreservedPerTx f (CoinSelectionsSetup cs addrs) = do
     let sels = getCS <$> cs
     let getCoinValueFromInp =
-            f . map (\(_, TxOut _ (Coin c)) -> c)
+            f . map (\(_, TxOut {tokens}) -> unCoin $ TB.getCoin tokens)
     let selsCoinValue = getCoinValueFromInp . inputs . getCS <$> cs
     let getCoinValueFromTxOut (UnsignedTx _ txouts _) =
-            f $ map (\(TxOut _ (Coin c)) -> c) txouts
+            f $ map (\(TxOut {tokens}) -> unCoin $ TB.getCoin tokens) txouts
     let txsCoinValue = map getCoinValueFromTxOut
     txsCoinValue (assignMigrationAddresses addrs sels) === selsCoinValue
 
@@ -297,9 +299,9 @@ coinSelectionUnitTest run lbl expected (CoinSelectionFixture n fn utxoF outsF w)
             cs <- fst <$> run
                 (CoinSelectionOptions (const n) fn) txOuts (Quantity w) utxo
             return $ CoinSelectionResult
-                { rsInputs  = map (unCoin . coin . snd) (inputs cs)
+                { rsInputs  = map (unCoin . txOutCoin . snd) (inputs cs)
                 , rsChange  = map unCoin (change cs)
-                , rsOutputs = map (unCoin . coin) (outputs cs)
+                , rsOutputs = map (unCoin . txOutCoin) (outputs cs)
                 }
         result `shouldBe` expected
   where
@@ -339,12 +341,6 @@ instance Arbitrary (CoinSelectionOptions e) where
 instance Show (CoinSelectionOptions e) where
     show _ = "CoinSelectionOptions"
 
-instance Arbitrary a => Arbitrary (NonEmpty a) where
-    shrink xs = catMaybes (NE.nonEmpty <$> shrink (NE.toList xs))
-    arbitrary = do
-        n <- choose (1, 10)
-        NE.fromList <$> vector n
-
 instance Arbitrary CoinSelProp where
     shrink (CoinSelProp utxo wdrl outs) =
         [ CoinSelProp utxo' wdrl outs | utxo' <- shrink utxo ]
@@ -361,7 +357,7 @@ instance Arbitrary CoinSelProp where
 instance Arbitrary CoinSelectionForMigration where
     arbitrary = do
         txIntxOuts <- Map.toList . getUTxO <$> arbitrary
-        let chgs = map (\(_, TxOut _ c) -> c) txIntxOuts
+        let chgs = map (\(_, TxOut _ tokens) -> TB.getCoin tokens) txIntxOuts
         pure $ CoinSelectionForMigration $ mempty
             { inputs = txIntxOuts
             , change = chgs
@@ -392,7 +388,10 @@ instance Arbitrary Address where
 
 instance Arbitrary Coin where
     -- No Shrinking
-    arbitrary = Coin <$> choose (1, 100000)
+    arbitrary = genStrictlyPositiveCoin
+
+genStrictlyPositiveCoin :: Gen Coin
+genStrictlyPositiveCoin = Coin <$> choose (1, 100_000)
 
 instance Arbitrary TxIn where
     -- No Shrinking
@@ -409,7 +408,9 @@ instance Arbitrary (Hash "Tx") where
 
 instance Arbitrary TxOut where
     -- No Shrinking
-    arbitrary = applyArbitrary2 TxOut
+    arbitrary = TxOut
+        <$> arbitrary
+        <*> fmap TB.fromCoin genStrictlyPositiveCoin
 
 instance Arbitrary UTxO where
     shrink (UTxO utxo) = UTxO <$> shrink utxo
@@ -431,4 +432,4 @@ genTxOut :: [Word64] -> Gen [TxOut]
 genTxOut coins = do
     let n = length coins
     outs <- vector n
-    return $ zipWith TxOut outs (map Coin coins)
+    return $ zipWith TxOut outs (map (TB.fromCoin . Coin) coins)

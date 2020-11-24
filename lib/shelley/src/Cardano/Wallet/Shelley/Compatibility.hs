@@ -241,6 +241,7 @@ import qualified Cardano.Wallet.Primitive.Types.Address as W
 import qualified Cardano.Wallet.Primitive.Types.Coin as W
 import qualified Cardano.Wallet.Primitive.Types.Hash as W
 import qualified Cardano.Wallet.Primitive.Types.RewardAccount as W
+import qualified Cardano.Wallet.Primitive.Types.TokenBundle as TB
 import qualified Cardano.Wallet.Primitive.Types.Tx as W
 import qualified Codec.Binary.Bech32 as Bech32
 import qualified Codec.Binary.Bech32.TH as Bech32
@@ -629,7 +630,10 @@ fromGenesisData g initialFunds =
         mkTx (addr, c) = W.Tx
             pseudoHash
             []
-            [W.TxOut (fromShelleyAddress addr) (fromShelleyCoin c)]
+            [W.TxOut
+                (fromShelleyAddress addr)
+                (TB.fromCoin $ fromShelleyCoin c)
+            ]
             mempty
             Nothing
           where
@@ -689,7 +693,7 @@ fromShelleyTxIn (SL.TxIn txid ix) =
 
 fromShelleyTxOut :: Era e => SL.TxOut e -> W.TxOut
 fromShelleyTxOut (SL.TxOut addr amount) =
-  W.TxOut (fromShelleyAddress addr) (fromShelleyCoin amount)
+  W.TxOut (fromShelleyAddress addr) (TB.fromCoin $ fromShelleyCoin amount)
 
 fromShelleyAddress :: SL.Addr e -> W.Address
 fromShelleyAddress = W.Address
@@ -895,8 +899,8 @@ toCardanoLovelace (W.Coin c) = Cardano.Lovelace $ safeCast c
     safeCast = fromIntegral
 
 toCardanoTxOut :: W.TxOut -> Cardano.TxOut Shelley
-toCardanoTxOut (W.TxOut (W.Address addr) coin) =
-    Cardano.TxOut addr' (toCardanoLovelace coin)
+toCardanoTxOut (W.TxOut (W.Address addr) tokens) =
+    Cardano.TxOut addr' (toCardanoLovelace $ TB.getCoin tokens)
   where
     addr' = fromMaybe (error "toCardanoTxOut: malformed address")
         $ deserialiseFromRawBytes AsShelleyAddress addr

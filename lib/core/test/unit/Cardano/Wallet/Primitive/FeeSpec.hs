@@ -39,7 +39,7 @@ import Cardano.Wallet.Primitive.Types.Coin
 import Cardano.Wallet.Primitive.Types.Hash
     ( Hash (..) )
 import Cardano.Wallet.Primitive.Types.Tx
-    ( TxIn (..), TxOut (..) )
+    ( TxIn (..), TxOut (..), txOutCoin )
 import Cardano.Wallet.Primitive.Types.UTxO
     ( UTxO (..) )
 import Control.Arrow
@@ -93,6 +93,7 @@ import Test.QuickCheck.Monadic
     ( assert, monadicIO, pre, run )
 
 import qualified Cardano.Wallet.Primitive.CoinSelection as CS
+import qualified Cardano.Wallet.Primitive.Types.TokenBundle as TB
 import qualified Data.ByteString as BS
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map.Strict as Map
@@ -392,9 +393,9 @@ spec = do
 isValidSelection :: CoinSelection -> Bool
 isValidSelection cs =
     let
-        oAmt = sum $ map (fromIntegral . unCoin . coin) (outputs cs)
+        oAmt = sum $ map (fromIntegral . unCoin . txOutCoin) (outputs cs)
         cAmt = sum $ map (fromIntegral . unCoin) (change cs)
-        iAmt = sum $ map (fromIntegral . unCoin . coin . snd) (inputs cs)
+        iAmt = sum $ map (fromIntegral . unCoin . txOutCoin . snd) (inputs cs)
     in
         iAmt + (withdrawal cs) + (reclaim cs) >= oAmt + cAmt + (deposit cs)
 
@@ -615,8 +616,8 @@ feeUnitTest adjustOpts fixture expected = it title $ do
     result <- runExceptT $ do
         cs' <- adjustForFee (adjustOpts $ feeOptions feeF dustF) utxo cs
         return $ FeeOutput
-            { csInps  = map (unCoin . coin . snd) (inputs cs')
-            , csOuts  = map (unCoin . coin) (outputs cs')
+            { csInps  = map (unCoin . txOutCoin . snd) (inputs cs')
+            , csOuts  = map (unCoin . txOutCoin) (outputs cs')
             , csChngs = map unCoin (change cs')
             }
     result `shouldBe` expected
@@ -682,7 +683,7 @@ genTxOut :: [Coin] -> Gen [TxOut]
 genTxOut coins = do
     let n = length coins
     outs <- vector n
-    return $ zipWith TxOut outs coins
+    return $ zipWith TxOut outs (TB.fromCoin <$> coins)
 
 genSelection :: Gen CoinSelection
 genSelection = do

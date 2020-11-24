@@ -112,6 +112,7 @@ import qualified Cardano.Crypto as CC
 import qualified Cardano.Crypto.Hash.Class as Crypto
 import qualified Cardano.Crypto.Wallet as Crypto.HD
 import qualified Cardano.Wallet.Primitive.CoinSelection as CS
+import qualified Cardano.Wallet.Primitive.Types.TokenBundle as TB
 import qualified Data.ByteArray as BA
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
@@ -349,7 +350,7 @@ dummyCoinSel nInps nOuts = mempty
     }
   where
     dummyTxIn   = TxIn (Hash $ BS.pack (1:replicate 64 0)) . fromIntegral
-    dummyTxOut  = TxOut dummyAddr (Coin 1)
+    dummyTxOut  = TxOut dummyAddr (TB.fromCoin $ Coin 1)
     dummyAddr   = Address $ BS.pack (1:replicate 64 0)
 
 _decodeSignedTx
@@ -462,8 +463,8 @@ computeTxSize networkId witTag md action cs =
             }
 
         dummyOutput :: Coin -> TxOut
-        dummyOutput =
-            TxOut $ Address $ BS.pack $ 0:replicate 56 0
+        dummyOutput c =
+            TxOut (Address $ BS.pack $ 0:replicate 56 0) (TB.fromCoin c)
 
         dummyStakeCred = toCardanoStakeCredential
             $ RewardAccount dummyKeyHashRaw
