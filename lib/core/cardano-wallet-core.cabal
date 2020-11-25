@@ -40,6 +40,8 @@ library
     , cardano-addresses
     , cardano-api
     , cardano-crypto
+    , cardano-crypto-class
+    , cardano-ledger-shelley-ma
     , cardano-slotting
     , cborg
     , containers
@@ -91,6 +93,7 @@ library
     , servant
     , servant-client
     , servant-server
+    , shelley-spec-ledger
     , split
     , statistics
     , stm
@@ -172,6 +175,7 @@ library
       Cardano.Wallet.Primitive.Types.Tx
       Cardano.Wallet.Primitive.Types.UTxO
       Cardano.Wallet.Registry
+      Cardano.Wallet.Shelley.MultiAsset.Compatibility
       Cardano.Wallet.Transaction
       Cardano.Wallet.Unsafe
       Cardano.Wallet.Version

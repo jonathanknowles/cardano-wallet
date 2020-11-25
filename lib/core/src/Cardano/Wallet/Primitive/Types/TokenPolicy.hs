@@ -7,11 +7,11 @@
 module Cardano.Wallet.Primitive.Types.TokenPolicy
     (
       -- * Token Policies
-      TokenPolicyId
+      TokenPolicyId (..)
     , mkTokenPolicyId
 
       -- * Token Names
-    , TokenName
+    , TokenName (..)
     , mkTokenName
 
       -- * Constants

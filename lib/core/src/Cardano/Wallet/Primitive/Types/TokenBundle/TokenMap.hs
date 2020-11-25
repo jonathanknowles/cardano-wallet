@@ -14,7 +14,7 @@
 module Cardano.Wallet.Primitive.Types.TokenBundle.TokenMap
     (
     -- * Types
-      TokenMap
+      TokenMap (..)
     , AssetId (..)
 
     -- * Construction
