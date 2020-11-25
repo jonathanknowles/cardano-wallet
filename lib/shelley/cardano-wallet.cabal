@@ -140,6 +140,7 @@ executable shelley-test-cluster
     ghc-options: -O2 -Werror
   build-depends:
       base
+    , cardano-api
     , cardano-wallet-cli
     , cardano-wallet-core
     , cardano-wallet-core-integration

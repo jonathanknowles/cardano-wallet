@@ -21,7 +21,7 @@ module Cardano.Wallet.DB.Sqlite.Types where
 
 import Prelude
 
-import Cardano.Api.MetaData
+import Cardano.API
     ( TxMetadataJsonSchema (..), metadataFromJson, metadataToJson )
 import Cardano.Api.Typed
     ( displayError )

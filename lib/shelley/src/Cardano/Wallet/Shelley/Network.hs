@@ -169,6 +169,8 @@ import Ouroboros.Consensus.Cardano.Block
     , GenTx (..)
     , Query (..)
     )
+import Ouroboros.Consensus.HardFork.Combinator.Basics
+    ( HardForkBlock )
 import Ouroboros.Consensus.HardFork.Combinator
     ( QueryAnytime (..), QueryHardFork (..) )
 import Ouroboros.Consensus.HardFork.Combinator.AcrossEras
@@ -237,7 +239,7 @@ import Ouroboros.Network.Protocol.ChainSync.Client
 import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     ( chainSyncClientPeerPipelined )
 import Ouroboros.Network.Protocol.Handshake.Version
-    ( DictVersion (..), simpleSingletonVersions )
+    ( simpleSingletonVersions )
 import Ouroboros.Network.Protocol.LocalStateQuery.Client
     ( localStateQueryClientPeer )
 import Ouroboros.Network.Protocol.LocalStateQuery.Type
@@ -292,7 +294,7 @@ withNetworkLayer
     -> (NetworkLayer IO (IO Shelley) (CardanoBlock StandardCrypto) -> IO a)
         -- ^ Callback function with the network layer
     -> IO a
-withNetworkLayer tr np addrInfo versionData action = do
+withNetworkLayer tr np addrInfo (versionData, _) action = do
     -- NOTE: We keep client connections running for accessing the node tip,
     -- submitting transactions, querying parameters and delegations/rewards.
     --
@@ -612,7 +614,7 @@ codecVersion = verMap ! nodeToClientVersion
     where verMap = supportedNodeToClientVersions (Proxy @(CardanoBlock StandardCrypto))
 
 codecConfig :: W.SlottingParameters -> CodecConfig (CardanoBlock c)
-codecConfig sp = CardanoCodecConfig (byronCodecConfig sp) ShelleyCodecConfig
+codecConfig sp = CardanoCodecConfig (byronCodecConfig sp) ShelleyCodecConfig ShelleyCodecConfig ShelleyCodecConfig
 
 -- | A group of codecs which will deserialise block data.
 codecs
@@ -964,12 +966,11 @@ connectClient
     :: Tracer IO NetworkLayerLog
     -> RetryHandlers
     -> NetworkClient IO
-    -> (NodeToClientVersionData, CodecCBORTerm Text NodeToClientVersionData)
+    -> NodeToClientVersionData
     -> FilePath
     -> IO ()
-connectClient tr handlers client (vData, vCodec) addr = withIOManager $ \iocp -> do
-    let vDict = DictVersion vCodec
-    let versions = simpleSingletonVersions nodeToClientVersion vData vDict client
+connectClient tr handlers client vData addr = withIOManager $ \iocp -> do
+    let versions = simpleSingletonVersions nodeToClientVersion vData client
     let tracers = NetworkConnectTracers
             { nctMuxTracer = nullTracer
             , nctHandshakeTracer = contramap MsgHandshakeTracer tr
@@ -1069,7 +1070,8 @@ data NetworkLayerLog where
     MsgLocalStateQuery
         :: QueryClientName
         -> (TraceSendRecv
-            (LocalStateQuery (CardanoBlock StandardCrypto) (Query (CardanoBlock StandardCrypto))))
+            (LocalStateQuery (CardanoBlock StandardCrypto) (Point (CardanoBlock StandardCrypto))
+                (Query (CardanoBlock StandardCrypto))))
         -> NetworkLayerLog
     MsgHandshakeTracer ::
       (WithMuxBearer (ConnectionId LocalAddress) HandshakeTrace) -> NetworkLayerLog
@@ -1087,8 +1089,8 @@ data NetworkLayerLog where
         -> Set W.RewardAccount
         -> NetworkLayerLog
     MsgAccountDelegationAndRewards
-        :: (Map (SL.Credential 'SL.Staking (SL.Shelley StandardCrypto)) (SL.KeyHash 'SL.StakePool (SL.Shelley StandardCrypto)))
-        -> SL.RewardAccounts (SL.Shelley StandardCrypto)
+        :: (Map (SL.Credential 'SL.Staking (SL.ShelleyEra StandardCrypto)) (SL.KeyHash 'SL.StakePool StandardCrypto))
+        -> SL.RewardAccounts (SL.ShelleyEra StandardCrypto)
         -> NetworkLayerLog
     MsgDestroyCursor :: ThreadId -> NetworkLayerLog
     MsgWillQueryRewardsForStake :: W.Coin -> NetworkLayerLog

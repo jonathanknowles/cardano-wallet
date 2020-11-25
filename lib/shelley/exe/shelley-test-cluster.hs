@@ -34,8 +34,6 @@ import Cardano.Wallet.Shelley
     , setupTracers
     , tracerSeverities
     )
-import Cardano.Wallet.Shelley.Compatibility
-    ( Shelley )
 import Cardano.Wallet.Shelley.Launch
     ( ClusterLog (..)
     , RunningNode (..)
@@ -69,6 +67,7 @@ import Test.Integration.Faucet
     ( genRewardAccounts, mirMnemonics, shelleyIntegrationTestFunds )
 
 import qualified Data.Text as T
+import qualified Cardano.Api.Typed as Cardano
 
 -- |
 -- # OVERVIEW
@@ -236,7 +235,7 @@ main = do
     whenReady tr trCluster db (RunningNode socketPath block0 (gp, vData)) = do
         let tracers = setupTracers (tracerSeverities (Just Info)) tr
         listen <- walletListenFromEnv
-        void $ serveWallet @(IO Shelley)
+        void $ serveWallet @(IO Cardano.ShelleyEra)
             (SomeNetworkDiscriminant $ Proxy @'Mainnet)
             tracers
             (SyncTolerance 10)

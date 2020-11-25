@@ -180,7 +180,7 @@ import Ouroboros.Consensus.Shelley.Node
 import Ouroboros.Network.Magic
     ( NetworkMagic (..) )
 import Ouroboros.Network.NodeToClient
-    ( NodeToClientVersionData (..), nodeToClientCodecCBORTerm )
+    ( NodeToClientVersion (.. ), NodeToClientVersionData (..), nodeToClientCodecCBORTerm )
 import System.Directory
     ( copyFile, createDirectory, createDirectoryIfMissing, makeAbsolute )
 import System.Environment
@@ -987,7 +987,7 @@ genConfig dir severity mExtraLogFile systemStart = do
     let shelleyParams = fst $ Shelley.fromGenesisData shelleyGenesis []
     let versionData =
             ( NodeToClientVersionData $ NetworkMagic networkMagic
-            , nodeToClientCodecCBORTerm
+            , nodeToClientCodecCBORTerm NodeToClientV_3
             )
 
     pure

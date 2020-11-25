@@ -44,7 +44,7 @@ import Cardano.Api.Typed
 import Cardano.Binary
     ( serialize' )
 import Cardano.Crypto.DSIGN
-    ( DSIGNAlgorithm (..), SignedDSIGN (..) )
+    ( DSIGNAlgorithm (..), SignedDSIGN (..), sizeSigDSIGN, sizeVerKeyDSIGN )
 import Cardano.Crypto.Wallet
     ( XPub )
 import Cardano.Ledger.Crypto
@@ -602,7 +602,7 @@ mkByronWitness (Cardano.ShelleyTxBody body _) nw addr encryptedKey =
     Cardano.ShelleyBootstrapWitness $
         SL.makeBootstrapWitness txHash (unencrypt encryptedKey) addrAttr
   where
-    txHash = Crypto.hashWith serialize' body
+    txHash = Crypto.castHash $ Crypto.hashWith serialize' body
 
     unencrypt (xprv, pwd) = CC.SigningKey
         $ Crypto.HD.xPrvChangePass pwd BS.empty xprv

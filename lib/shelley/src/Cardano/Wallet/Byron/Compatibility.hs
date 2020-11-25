@@ -130,6 +130,8 @@ import Ouroboros.Network.Magic
     ( NetworkMagic (..) )
 import Ouroboros.Network.NodeToClient
     ( NodeToClientVersionData (..), nodeToClientCodecCBORTerm )
+import Ouroboros.Network.NodeToClient.Version
+    ( NodeToClientVersion (..) )
 import Ouroboros.Network.Point
     ( WithOrigin (..) )
 
@@ -264,7 +266,7 @@ mainnetVersionData =
         { networkMagic =
             NetworkMagic $ fromIntegral $ W.getProtocolMagic W.mainnetMagic
         }
-    , nodeToClientCodecCBORTerm
+    , nodeToClientCodecCBORTerm NodeToClientV_6
     )
 
 -- | Settings for configuring a TestNet network client
@@ -276,7 +278,7 @@ testnetVersionData pm =
         { networkMagic =
             NetworkMagic $ fromIntegral $ W.getProtocolMagic pm
         }
-    , nodeToClientCodecCBORTerm
+    , nodeToClientCodecCBORTerm NodeToClientV_6
     )
 
 --------------------------------------------------------------------------------

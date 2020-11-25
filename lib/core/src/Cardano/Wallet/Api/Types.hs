@@ -158,7 +158,7 @@ import Cardano.Address.Derivation
     ( XPrv, XPub, xpubToBytes )
 import Cardano.Address.Script
     ( Script )
-import Cardano.Api.MetaData
+import Cardano.API
     ( TxMetadataJsonSchema (..), metadataFromJson, metadataToJson )
 import Cardano.Api.Typed
     ( displayError )
