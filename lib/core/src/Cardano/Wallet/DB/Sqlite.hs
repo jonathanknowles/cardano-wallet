@@ -8,6 +8,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -1280,7 +1281,7 @@ txHistoryFromEntity
     -> W.BlockHeader
     -> [TxMeta]
     -> [(TxIn, Maybe TxOut)]
-    -> [TxOut]
+    -> [(TxOut, [TxOutToken])]
     -> [TxWithdrawal]
     -> m [W.TransactionInfo]
 txHistoryFromEntity ti tip metas ins outs ws =
@@ -1296,7 +1297,9 @@ txHistoryFromEntity ti tip metas ins outs ws =
             , W.txInfoInputs =
                 map mkTxIn $ filter ((== txid) . txInputTxId . fst) ins
             , W.txInfoOutputs =
-                map mkTxOut $ filter ((== txid) . txOutputTxId) outs
+                map mkTxOut
+                    $ filter ((== txid) . txOutputTxId)
+                    $ fmap fst outs
             , W.txInfoWithdrawals =
                 Map.fromList
                     $ map mkTxWithdrawal
@@ -1507,7 +1510,11 @@ selectUTxO cp = fmap entityVal <$>
 -- See also: issue #573.
 selectTxs
     :: [TxId]
-    -> SqlPersistT IO ([(TxIn, Maybe TxOut)], [TxOut], [TxWithdrawal])
+    -> SqlPersistT IO
+        ( [(TxIn, Maybe (TxOut))]
+        , [(TxOut, [TxOutToken])]
+        , [TxWithdrawal]
+        )
 selectTxs = fmap concatUnzip . mapM select . chunksOf chunkSize
   where
     select txids = do
@@ -1520,9 +1527,16 @@ selectTxs = fmap concatUnzip . mapM select . chunksOf chunkSize
                 [TxOutputTxId <-. (txInputSourceTxId <$> inputsChunk)]
                 [Asc TxOutputTxId, Asc TxOutputIndex])
 
-        outputs <- fmap entityVal <$> selectList
-            [TxOutputTxId <-. txids]
-            [Asc TxOutputTxId, Asc TxOutputIndex]
+        outputs <- do
+            outs <- fmap entityVal <$> selectList
+                [TxOutputTxId <-. txids]
+                [Asc TxOutputTxId, Asc TxOutputIndex]
+            forM outs $ \out ->
+                (out,) . fmap entityVal <$> selectList
+                    [ TxOutTokenTxId ==. txOutputTxId out
+                    , TxOutTokenTxIndex ==. txOutputIndex out
+                    ]
+                    []
 
         withdrawals <- fmap entityVal <$> selectList
             [TxWithdrawalTxId <-. txids]
