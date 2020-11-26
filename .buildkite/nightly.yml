@@ -47,7 +47,7 @@ steps:
     timeout_in_minutes: 360
     env:
       HOME: "/cache/cardano-wallet.home"
-      HSPEC_OPTIONS: "--qc-max-success=200"
+      HSPEC_OPTIONS: "--qc-max-success=400"
     agents:
       system: x86_64-linux
 
