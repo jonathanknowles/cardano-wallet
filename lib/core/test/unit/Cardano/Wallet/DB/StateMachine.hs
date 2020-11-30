@@ -139,7 +139,7 @@ import Cardano.Wallet.Primitive.Types.TokenBundle
 import Cardano.Wallet.Primitive.Types.TokenBundle.TokenMap
     ( TokenMap )
 import Cardano.Wallet.Primitive.Types.TokenPolicy
-    ( TokenPolicyId, TokenName )
+    ( TokenName, TokenPolicyId )
 import Cardano.Wallet.Primitive.Types.TokenQuantity
     ( TokenQuantity )
 import Cardano.Wallet.Primitive.Types.Tx

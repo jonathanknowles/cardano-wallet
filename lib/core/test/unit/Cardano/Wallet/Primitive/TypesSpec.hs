@@ -100,6 +100,8 @@ import Cardano.Wallet.Primitive.Types.HashSpec
     ()
 import Cardano.Wallet.Primitive.Types.RewardAccount
     ( RewardAccount (..) )
+import Cardano.Wallet.Primitive.Types.TokenBundleSpec
+    ()
 import Cardano.Wallet.Primitive.Types.Tx
     ( Direction (..)
     , Tx (..)
@@ -110,8 +112,6 @@ import Cardano.Wallet.Primitive.Types.Tx
     , TxOut (..)
     , TxStatus (..)
     )
-import Cardano.Wallet.Primitive.Types.TokenBundleSpec
-    ()
 import Cardano.Wallet.Primitive.Types.UTxO
     ( BoundType
     , Dom (..)

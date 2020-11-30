@@ -76,6 +76,7 @@ library
     , ntp-client
     , OddWord
     , ouroboros-consensus
+    , ouroboros-consensus-shelley
     , ouroboros-network
     , path-pieces
     , persistent

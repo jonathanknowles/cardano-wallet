@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE TypeApplications #-}
 
 module Cardano.Wallet.Primitive.Types.TokenPolicy
@@ -28,12 +28,12 @@ import Control.DeepSeq
     ( NFData )
 import Control.Monad
     ( (>=>) )
+import Data.Aeson
+    ( FromJSON (..), ToJSON (..) )
 import Data.ByteString
     ( ByteString )
 import Data.Text
     ( Text )
-import Data.Aeson
-    ( FromJSON (..), ToJSON (..) )
 import Data.Text.Class
     ( FromText (..), ToText (..) )
 import Fmt

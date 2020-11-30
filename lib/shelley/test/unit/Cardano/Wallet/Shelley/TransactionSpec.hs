@@ -53,6 +53,12 @@ import Cardano.Wallet.Primitive.Types.Coin
     ( Coin (..) )
 import Cardano.Wallet.Primitive.Types.Hash
     ( Hash (..) )
+import Cardano.Wallet.Primitive.Types.TokenBundle
+    ( AssetId (..), TokenBundle )
+import Cardano.Wallet.Primitive.Types.TokenPolicy
+    ( TokenName, TokenPolicyId )
+import Cardano.Wallet.Primitive.Types.TokenQuantity
+    ( TokenQuantity (..) )
 import Cardano.Wallet.Primitive.Types.Tx
     ( TxIn (..)
     , TxMetadata (..)
@@ -60,12 +66,6 @@ import Cardano.Wallet.Primitive.Types.Tx
     , TxOut (..)
     , txMetadataIsNull
     )
-import Cardano.Wallet.Primitive.Types.TokenBundle
-    ( AssetId (..), TokenBundle )
-import Cardano.Wallet.Primitive.Types.TokenPolicy
-    ( TokenPolicyId, TokenName )
-import Cardano.Wallet.Primitive.Types.TokenQuantity
-    ( TokenQuantity (..) )
 import Cardano.Wallet.Primitive.Types.UTxO
     ( UTxO (..) )
 import Cardano.Wallet.Shelley.Compatibility

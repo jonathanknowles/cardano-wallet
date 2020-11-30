@@ -66,8 +66,8 @@ import System.IO
 import Test.Integration.Faucet
     ( genRewardAccounts, mirMnemonics, shelleyIntegrationTestFunds )
 
-import qualified Data.Text as T
 import qualified Cardano.Api.Typed as Cardano
+import qualified Data.Text as T
 
 -- |
 -- # OVERVIEW

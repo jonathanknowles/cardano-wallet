@@ -1,7 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE DerivingStrategies #-}
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE TupleSections #-}
@@ -54,20 +54,22 @@ module Cardano.Wallet.Primitive.Types.TokenBundle.TokenMap
 import Prelude hiding
     ( negate, null, subtract )
 
-import Cardano.Wallet.Primitive.Types.TokenQuantity
-    ( TokenQuantity (..) )
 import Cardano.Wallet.Primitive.Types.TokenPolicy
     ( TokenName, TokenPolicyId )
+import Cardano.Wallet.Primitive.Types.TokenQuantity
+    ( TokenQuantity (..) )
 import Control.DeepSeq
     ( NFData )
 import Control.Monad
-    ( (<=<), mapM, when )
+    ( mapM, when, (<=<) )
 import Data.Aeson
     ( FromJSON (..), ToJSON (..), camelTo2, genericParseJSON, genericToJSON )
 import Data.Aeson.Types
     ( Options (..), Parser )
 import Data.Bifunctor
     ( first )
+import Data.List.NonEmpty
+    ( NonEmpty (..) )
 import Data.Map.NonEmpty.Strict
     ( NonEmptyMap )
 import Data.Map.Strict
@@ -76,8 +78,6 @@ import Data.Maybe
     ( fromMaybe, isJust )
 import Data.Text.Class
     ( toText )
-import Data.List.NonEmpty
-    ( NonEmpty (..) )
 import Fmt
     ( Buildable (..), Builder, blockListF', blockMapF )
 import GHC.Generics

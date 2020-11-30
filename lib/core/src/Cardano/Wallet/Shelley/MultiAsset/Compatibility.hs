@@ -1,4 +1,5 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -17,15 +18,11 @@ module Cardano.Wallet.Shelley.MultiAsset.Compatibility where
 import Prelude
 
 import Cardano.Crypto.Hash
-    ( HashAlgorithm, hashFromBytes )
-import Cardano.Ledger.Crypto
-    ( ADDRHASH )
-import Cardano.Ledger.Era
-    ( Crypto )
-import Cardano.Ledger.Era
-    ( Era (..) )
+    ( hashFromBytes )
 import Cardano.Ledger.Mary.Value
     ( AssetName (..), PolicyID (..), Value (..) )
+import Cardano.Ledger.Shelley
+    ( ShelleyEra )
 import Cardano.Ledger.Val
     ( scaledMinDeposit )
 import Cardano.Wallet.Primitive.Types.Coin
@@ -40,49 +37,65 @@ import Cardano.Wallet.Primitive.Types.TokenPolicy
     ( TokenName (..), TokenPolicyId (..) )
 import Cardano.Wallet.Primitive.Types.TokenQuantity
     ( TokenQuantity (..) )
+import Control.Monad.Trans.Except
+    ( except, runExceptT, throwE )
 import Data.Bits
     ( toIntegralSized )
+import Data.Functor.Identity
+    ( runIdentity )
 import Data.Map.NonEmpty.Strict
     ( toMap )
 import Data.Text.Encoding
     ( encodeUtf8 )
+import Ouroboros.Consensus.Shelley.Protocol.Crypto
+    ( StandardCrypto )
 import Shelley.Spec.Ledger.Scripts
     ( ScriptHash (..) )
 
+import qualified Data.ByteString as BS
 import qualified Data.Map.Strict as Map
 import qualified Shelley.Spec.Ledger.Coin as SL
+
+data ErrMinCoinCalc
+    = ErrMinCoinCalc_CoinConversionFailed SL.Coin
+    | ErrMinCoinCalc_BStoSBSFailed BS.ByteString
+    deriving (Show, Eq)
 
 -- | Convert our own @TokenBundle@ type to the corresponding
 -- @Value era@ ledger type. This should be very low in cost,
 -- because it just converts strict Map to strict Map.
 toLedgerSpecValue
-    :: forall era. (HashAlgorithm (ADDRHASH (Crypto era)))
-    => TokenBundle
-    -> Value era
+    :: TokenBundle
+    -> Either ErrMinCoinCalc (Value (ShelleyEra StandardCrypto))
 toLedgerSpecValue = \(TokenBundle ada (TokenMap tb)) ->
-    Value (fromIntegral $ unCoin ada) . Map.foldrWithKey' outer Map.empty $ tb
+    runIdentity $ runExceptT $ do
+        m <- Map.foldrWithKey' outer (pure Map.empty) tb
+        pure $ Value (fromIntegral $ unCoin ada) m
   where
-    outer (TokenPolicyId h) a m = case hashFromBytes $ getHash h of
-        Just sbs -> Map.insert
-            (PolicyID (ScriptHash sbs))
-            (Map.foldrWithKey inner mempty (toMap a))
-            m
-        Nothing -> m -- TODO: do we want to hard-fail here?
+    outer (TokenPolicyId h) !a m =
+        let hash = getHash h
+        in case hashFromBytes hash of
+            Just sbs -> m >>= pure . Map.insert
+                (PolicyID (ScriptHash sbs))
+                (Map.foldrWithKey inner mempty (toMap a))
+            Nothing -> throwE $ ErrMinCoinCalc_BStoSBSFailed hash
     inner (TokenName k) (TokenQuantity a) m = Map.insert (AssetName $ encodeUtf8 k) a m
 
 -- | Calculate the minimal UTxO value for a token bundle.
 --
 -- Returns @Nothing@ if Coin conversion fails (Integer to Word64).
 calculateMinCoin
-    :: forall era . (Era era)
-    => Coin        -- ^ the protocol minUTxOValue
+    :: Coin        -- ^ the protocol minUTxOValue
     -> TokenBundle
-    -> Maybe Coin
-calculateMinCoin = \c t -> fromLedgerCoin $ scaledMinDeposit
-    (toLedgerSpecValue @era t) (fromWalletCoin c)
+    -> Either ErrMinCoinCalc Coin
+calculateMinCoin = \ !c !t -> runIdentity $ runExceptT $ do
+    val <- except $ toLedgerSpecValue t
+    except $ fromLedgerCoin $ scaledMinDeposit val (fromWalletCoin c)
   where
-    fromLedgerCoin :: SL.Coin -> Maybe Coin
-    fromLedgerCoin (SL.Coin i) = Coin <$> (toIntegralSized i)
+    fromLedgerCoin :: SL.Coin -> Either ErrMinCoinCalc Coin
+    fromLedgerCoin slc@(SL.Coin !i) =
+        maybe (Left $ ErrMinCoinCalc_CoinConversionFailed slc)
+            Right (Coin <$> (toIntegralSized i))
 
     fromWalletCoin :: Coin -> SL.Coin
-    fromWalletCoin (Coin i) = SL.Coin (fromIntegral i)
+    fromWalletCoin (Coin !i) = SL.Coin (fromIntegral i)

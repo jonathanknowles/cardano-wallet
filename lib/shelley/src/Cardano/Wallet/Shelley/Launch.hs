@@ -180,7 +180,10 @@ import Ouroboros.Consensus.Shelley.Node
 import Ouroboros.Network.Magic
     ( NetworkMagic (..) )
 import Ouroboros.Network.NodeToClient
-    ( NodeToClientVersion (.. ), NodeToClientVersionData (..), nodeToClientCodecCBORTerm )
+    ( NodeToClientVersion (..)
+    , NodeToClientVersionData (..)
+    , nodeToClientCodecCBORTerm
+    )
 import System.Directory
     ( copyFile, createDirectory, createDirectoryIfMissing, makeAbsolute )
 import System.Environment
