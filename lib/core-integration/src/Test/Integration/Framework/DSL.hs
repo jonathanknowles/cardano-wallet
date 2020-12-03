@@ -93,6 +93,7 @@ module Test.Integration.Framework.DSL
     , quitStakePoolUnsigned
     , selectCoins
     , listAddresses
+    , getWallet
     , listTransactions
     , listAllTransactions
     , deleteAllWallets
@@ -1623,6 +1624,17 @@ listAddresses ctx w = do
     let link = Link.listAddresses @'Shelley w
     (_, addrs) <- unsafeRequest @[ApiAddress n] ctx link Empty
     return addrs
+
+getWallet
+    :: forall t m. (MonadIO m, MonadCatch m)
+    => Context t
+    -> ApiWallet
+    -> m ApiWallet
+getWallet ctx w = do
+    let link = Link.getWallet @'Shelley w
+    (_, wallet) <- unsafeRequest @ApiWallet ctx
+        link Empty
+    return wallet
 
 listAllTransactions
     :: forall n t w m.

@@ -1,5 +1,6 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE QuasiQuotes #-}
@@ -32,6 +33,8 @@ import Cardano.Wallet.Primitive.Types.Address
     ( AddressState (..) )
 import Control.Monad
     ( forM, forM_ )
+import Control.Monad.IO.Class
+    ( liftIO )
 import Control.Monad.Trans.Resource
     ( runResourceT )
 import Data.Aeson
@@ -61,6 +64,7 @@ import Test.Integration.Framework.DSL
     , expectResponseCode
     , fixtureWallet
     , getFromResponse
+    , getWallet
     , json
     , listAddresses
     , minUTxOValue
@@ -252,6 +256,83 @@ spec = describe "SHELLEY_ADDRESSES" $ do
             , expectListField 0 (Aeson.key "id" . Aeson._String)
                 (`shouldNotSatisfy` T.isPrefixOf "addr_test")
             ]
+
+    it "ADDRESS_LIST_06 - Change addresses are listed even after transaction is no longer pending" $ \ctx -> runResourceT $ do
+        let initPoolGap = 10
+
+        let verifyAddrs i p addr = do
+                liftIO (length (filter ((== Used) . (^. (#state . #getApiT))) addr)
+                    `shouldBe` p)
+                liftIO (length addr `shouldBe` i)
+
+        -- 1. create shelley wallet
+        wSrc <- fixtureWallet ctx
+        wDest <- emptyWalletWith ctx ("Wallet", "cardano-wallet", initPoolGap)
+
+        -- 2. list addresses of that wallet (for later comparison)
+        listAddresses @n ctx wSrc >>= verifyAddrs 50 10
+
+        -- 3. send a transaction from that wallet
+        addrs <- listAddresses @n ctx wDest
+        verifyAddrs 20 0 addrs
+        let destination = (addrs !! 0) ^. #id
+        let payload = Json [json|{
+                "payments": [{
+                    "address": #{destination},
+                    "amount": {
+                        "quantity": #{2 * minUTxOValue},
+                        "unit": "lovelace"
+                    }
+                }],
+                "passphrase": "cardano-wallet"
+            }|]
+
+        request @(ApiTransaction n) ctx
+            (Link.createTransaction @'Shelley wSrc) Default payload
+            >>= flip verify
+                [ expectResponseCode HTTP.status202 ]
+
+        -- 4. wait for transaction to be inserted
+        eventually "Wallet balance = minUTxOValue" $ do
+            rb <- request @ApiWallet ctx
+                (Link.getWallet @'Shelley wDest) Default Empty
+            expectField
+                (#balance . #getApiT . #available)
+                (`shouldBe` Quantity (2 * minUTxOValue))
+                rb
+
+        -- 5. Check that change address is still there as unused
+        -- and the gap moved.
+        listAddresses @n ctx wSrc >>= verifyAddrs 51 11
+
+        -- 6. send another transaction from the destination wallet
+        listAddresses @n ctx wDest >>= verifyAddrs 21 1
+        addrs' <- listAddresses @n ctx wSrc
+        let destination' = (addrs' !! 22) ^. #id
+        let payload' = Json [json|{
+                "payments": [{
+                    "address": #{destination'},
+                    "amount": {
+                        "quantity": #{minUTxOValue},
+                        "unit": "lovelace"
+                    }
+                }],
+                "passphrase": "cardano-wallet"
+            }|]
+        currentSrcWallet <- getWallet ctx wSrc
+        let currentSrcWalletBalance = currentSrcWallet ^. (#balance . #getApiT . #available)
+        request @(ApiTransaction n) ctx
+            (Link.createTransaction @'Shelley wDest) Default payload'
+            >>= flip verify
+                [ expectResponseCode HTTP.status202 ]
+        eventually "Wallet balance = minUTxOValue + current" $ do
+            rb <- request @ApiWallet ctx
+                (Link.getWallet @'Shelley wSrc) Default Empty
+            expectField
+                (#balance . #getApiT . #available)
+                (`shouldBe` fmap (1 * minUTxOValue +) currentSrcWalletBalance)
+                rb
+        listAddresses @n ctx wDest >>= verifyAddrs 22 2
 
     it "ADDRESS_INSPECT_01 - Address inspect OK" $ \ctx -> do
         let str = "Ae2tdPwUPEYz6ExfbWubiXPB6daUuhJxikMEb4eXRp5oKZBKZwrbJ2k7EZe"
