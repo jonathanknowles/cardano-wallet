@@ -110,8 +110,8 @@ import Cardano.Wallet.Primitive.Types.Hash
     ( Hash (..) )
 import Cardano.Wallet.Primitive.Types.RewardAccount
     ( RewardAccount (..) )
-import Cardano.Wallet.Primitive.Types.TokenBundleSpec
-    ()
+import Cardano.Wallet.Primitive.Types.TokenBundle.Gen
+    ( genTokenBundleSmallRange )
 import Cardano.Wallet.Primitive.Types.Tx
     ( Direction (..)
     , Tx (..)
@@ -393,7 +393,7 @@ instance Arbitrary TxIn where
 instance Arbitrary TxOut where
     arbitrary = TxOut
         <$> arbitrary
-        <*> arbitrary
+        <*> genTokenBundleSmallRange
 
 instance Arbitrary TxMeta where
     arbitrary = do

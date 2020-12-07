@@ -179,8 +179,6 @@ import Cardano.Wallet.Primitive.Types.Hash
     ( Hash (..) )
 import Cardano.Wallet.Primitive.Types.RewardAccount
     ( RewardAccount (..) )
-import Cardano.Wallet.Primitive.Types.TokenBundleSpec
-    ()
 import Cardano.Wallet.Primitive.Types.Tx
     ( Direction (..)
     , TxIn (..)
@@ -1399,6 +1397,10 @@ instance Arbitrary SyncProgress where
 instance Arbitrary a => Arbitrary (ApiT a) where
     arbitrary = ApiT <$> arbitrary
     shrink = fmap ApiT . shrink . getApiT
+
+instance Arbitrary a => Arbitrary (NonEmpty a) where
+    arbitrary = genericArbitrary
+    shrink = genericShrink
 
 -- | The initial seed has to be vector or length multiple of 4 bytes and shorter
 -- than 64 bytes. Note that this is good for testing or examples, but probably

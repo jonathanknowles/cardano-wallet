@@ -36,8 +36,6 @@ import Cardano.Wallet.Primitive.Types.Coin
     ( Coin (..) )
 import Cardano.Wallet.Primitive.Types.Hash
     ( Hash (..) )
-import Cardano.Wallet.Primitive.Types.TokenBundleSpec
-    ()
 import Cardano.Wallet.Primitive.Types.Tx
     ( TxIn (..), TxOut (..), UnsignedTx (..), txOutCoin )
 import Cardano.Wallet.Primitive.Types.UTxO
@@ -46,6 +44,8 @@ import Control.Monad.Trans.Except
     ( ExceptT, runExceptT )
 import Data.List.NonEmpty
     ( NonEmpty (..) )
+import Data.Maybe
+    ( catMaybes )
 import Data.Quantity
     ( Quantity (..) )
 import Data.Vector.Shuffle
@@ -323,6 +323,12 @@ instance Arbitrary CoinSelectionOptions where
 
 instance Show CoinSelectionOptions where
     show _ = "CoinSelectionOptions"
+
+instance Arbitrary a => Arbitrary (NonEmpty a) where
+    shrink xs = catMaybes (NE.nonEmpty <$> shrink (NE.toList xs))
+    arbitrary = do
+        n <- choose (1, 10)
+        NE.fromList <$> vector n
 
 instance Arbitrary CoinSelProp where
     shrink (CoinSelProp utxo wdrl outs) =
