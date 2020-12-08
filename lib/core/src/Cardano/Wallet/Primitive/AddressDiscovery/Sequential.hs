@@ -794,19 +794,14 @@ instance
     ) => KnownAddresses (SeqState n k) where
     knownAddresses s =
         let
-            (PendingIxs ixs) =
-                pendingChangeIxs s
-            internalGap =
-                fromEnum . getAddressPoolGap . gap . internalPool $ s
-            discardUndiscoveredChange xs =
-                take (length ixs) $ drop (length xs - internalGap) xs
-            changeAddresses =
-                discardUndiscoveredChange $
-                    addresses (liftPaymentAddress @n @k) (internalPool s)
-            nonChangeAddresses =
+            -- instead of only showing as many unused change addresses as there
+            -- are pending transactions, we just show them all
+            visibleChangeAddresses = addresses (liftPaymentAddress @n @k) (internalPool s)
+
+            visibleNonChangeAddresses =
                 addresses (liftPaymentAddress @n @k) (externalPool s)
         in
-            nonChangeAddresses <> changeAddresses
+            visibleNonChangeAddresses <> visibleChangeAddresses
 
 --------------------------------------------------------------------------------
 --
