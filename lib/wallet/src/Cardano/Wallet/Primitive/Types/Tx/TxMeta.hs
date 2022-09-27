@@ -11,43 +11,48 @@
 -- License: Apache-2.0
 --
 -- This module provides the `TxMeta` data types used by the wallet.
---
 module Cardano.Wallet.Primitive.Types.Tx.TxMeta
-    ( TxMeta (..)
-    , TxStatus (..)
-    , Direction (..)
-    , WithDirection (..)
-    , isPending
-    )
-    where
-
-import Prelude
+  ( TxMeta (..),
+    TxStatus (..),
+    Direction (..),
+    WithDirection (..),
+    isPending,
+  )
+where
 
 import Cardano.Slotting.Slot
-    ( SlotNo (..) )
+  ( SlotNo (..),
+  )
 import Cardano.Wallet.Orphans
-    ()
+  (
+  )
 import Cardano.Wallet.Primitive.Types.Coin
-    ( Coin (..) )
+  ( Coin (..),
+  )
 import Control.DeepSeq
-    ( NFData (..) )
+  ( NFData (..),
+  )
 import Data.Quantity
-    ( Quantity (..) )
+  ( Quantity (..),
+  )
 import Data.Text.Class
-    ( CaseStyle (..)
-    , FromText (..)
-    , ToText (..)
-    , fromTextToBoundedEnum
-    , toTextFromBoundedEnum
-    )
-import Data.Word
-    ( Word32 )
-import Fmt
-    ( Buildable (..) )
-import GHC.Generics
-    ( Generic )
-
+  ( CaseStyle (..),
+    FromText (..),
+    ToText (..),
+    fromTextToBoundedEnum,
+    toTextFromBoundedEnum,
+  )
 import qualified Data.Text.Lazy.Builder as Builder
+import Data.Word
+  ( Word32,
+  )
+import Fmt
+  ( Buildable (..),
+  )
+import GHC.Generics
+  ( Generic,
+  )
+import Prelude
 
 -- | Additional information about a transaction, derived from the transaction
 -- and ledger state. This should not be confused with 'TxMetadata' which is
@@ -55,71 +60,80 @@ import qualified Data.Text.Lazy.Builder as Builder
 --
 -- TODO: TxProperties or TxProps would be a good name for this type.
 data TxMeta = TxMeta
-    { status :: !TxStatus
-    , direction :: !Direction
-    , slotNo :: !SlotNo
-    , blockHeight :: !(Quantity "block" Word32)
-    , amount :: !Coin
-    -- ^ Amount seen from the perspective of the wallet. Refers either to a
+  { status :: !TxStatus,
+    direction :: !Direction,
+    slotNo :: !SlotNo,
+    blockHeight :: !(Quantity "block" Word32),
+    -- | Amount seen from the perspective of the wallet. Refers either to a
     -- spent value for outgoing transaction, or a received value on incoming
     -- transaction.
-    , expiry :: !(Maybe SlotNo)
-      -- ^ The slot at which a pending transaction will no longer be accepted
-      -- into mempools.
-    } deriving (Show, Eq, Ord, Generic)
+    amount :: !Coin,
+    -- | The slot at which a pending transaction will no longer be accepted
+    -- into mempools.
+    expiry :: !(Maybe SlotNo)
+  }
+  deriving (Show, Eq, Ord, Generic)
 
 instance NFData TxMeta
 
 instance Buildable TxMeta where
-    build (TxMeta s d sl (Quantity bh) c mex) = mempty
-        <> build (WithDirection d c)
-        <> " " <> build s
-        <> " since " <> build sl <> "#" <> build bh
-        <> maybe mempty (\ex -> " (expires slot " <> build ex <> ")") mex
+  build (TxMeta s d sl (Quantity bh) c mex) =
+    mempty
+      <> build (WithDirection d c)
+      <> " "
+      <> build s
+      <> " since "
+      <> build sl
+      <> "#"
+      <> build bh
+      <> maybe mempty (\ex -> " (expires slot " <> build ex <> ")") mex
 
 data TxStatus
-    = Pending
-        -- ^ Created, but not yet in a block.
-    | InLedger
-        -- ^ Has been found in a block.
-    | Expired
-        -- ^ Time to live (TTL) has passed.
-    deriving (Show, Eq, Ord, Bounded, Enum, Generic)
+  = -- | Created, but not yet in a block.
+    Pending
+  | -- | Has been found in a block.
+    InLedger
+  | -- | Time to live (TTL) has passed.
+    Expired
+  deriving (Show, Eq, Ord, Bounded, Enum, Generic)
 
 instance NFData TxStatus
 
 instance Buildable TxStatus where
-    build = Builder.fromText . toTextFromBoundedEnum SpacedLowerCase
+  build = Builder.fromText . toTextFromBoundedEnum SpacedLowerCase
 
 instance FromText TxStatus where
-    fromText = fromTextToBoundedEnum SnakeLowerCase
+  fromText = fromTextToBoundedEnum SnakeLowerCase
 
 instance ToText TxStatus where
-    toText = toTextFromBoundedEnum SnakeLowerCase
+  toText = toTextFromBoundedEnum SnakeLowerCase
 
 -- | The effect of a @Transaction@ on the wallet balance.
 data Direction
-    = Outgoing -- ^ The wallet balance decreases.
-    | Incoming -- ^ The wallet balance increases or stays the same.
-    deriving (Show, Bounded, Enum, Eq, Ord, Generic)
+  = -- | The wallet balance decreases.
+    Outgoing
+  | -- | The wallet balance increases or stays the same.
+    Incoming
+  deriving (Show, Bounded, Enum, Eq, Ord, Generic)
 
 instance NFData Direction
 
 instance Buildable Direction where
-    build = Builder.fromText . toTextFromBoundedEnum SpacedLowerCase
+  build = Builder.fromText . toTextFromBoundedEnum SpacedLowerCase
 
 instance FromText Direction where
-    fromText = fromTextToBoundedEnum SnakeLowerCase
+  fromText = fromTextToBoundedEnum SnakeLowerCase
 
 instance ToText Direction where
-    toText = toTextFromBoundedEnum SnakeLowerCase
+  toText = toTextFromBoundedEnum SnakeLowerCase
 
 data WithDirection a = WithDirection Direction a
 
 instance Buildable a => Buildable (WithDirection a) where
-    build (WithDirection d a) = mempty
-        <> (case d of; Incoming -> "+"; Outgoing -> "-")
-        <> build a
+  build (WithDirection d a) =
+    mempty
+      <> (case d of Incoming -> "+"; Outgoing -> "-")
+      <> build a
 
 -- | True if the given metadata refers to a pending transaction
 isPending :: TxMeta -> Bool

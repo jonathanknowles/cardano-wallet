@@ -7,71 +7,81 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
-
 {-# OPTIONS_GHC -Wno-orphans #-}
+
 -- |
 -- Copyright: © 2020-2022 IOHK
 -- License: Apache-2.0
 --
 -- CBOR for transaction in specific eras.
---
-
 module Cardano.Wallet.Read.Tx.CBOR
-    ( TxCBOR
-    , renderTxToCBOR
-    , parseTxFromCBOR
-    , serializeTx
-    , deserializeTx
-    )
-    where
-
-import Prelude
+  ( TxCBOR,
+    renderTxToCBOR,
+    parseTxFromCBOR,
+    serializeTx,
+    deserializeTx,
+  )
+where
 
 import Cardano.Api
-    ( FromCBOR, ToCBOR )
+  ( FromCBOR,
+    ToCBOR,
+  )
 import Cardano.Binary
-    ( Annotator (runAnnotator)
-    , FromCBOR (fromCBOR)
-    , FullByteString (Full)
-    , toCBOR
-    )
+  ( Annotator (runAnnotator),
+    FromCBOR (fromCBOR),
+    FullByteString (Full),
+    toCBOR,
+  )
 import Cardano.Wallet.Read.Eras
-    ( (:.:) (..)
-    , EraFun (..)
-    , EraValue
-    , K (..)
-    , applyEraFun
-    , extractEraValue
-    , sequenceEraValue
-    )
+  ( EraFun (..),
+    EraValue,
+    K (..),
+    applyEraFun,
+    extractEraValue,
+    sequenceEraValue,
+    (:.:) (..),
+  )
 import Cardano.Wallet.Read.Tx
-    ( Tx (..), TxT )
+  ( Tx (..),
+    TxT,
+  )
 import Codec.CBOR.Read
-    ( DeserialiseFailure, deserialiseFromBytes )
+  ( DeserialiseFailure,
+    deserialiseFromBytes,
+  )
 import Codec.CBOR.Write
-    ( toLazyByteString )
+  ( toLazyByteString,
+  )
 import Data.ByteArray.Encoding
-    ( Base (Base16), convertToBase )
+  ( Base (Base16),
+    convertToBase,
+  )
 import Data.ByteString.Lazy
-    ( toStrict )
-import Data.Functor.Identity
-    ( Identity (..) )
-import Data.Text.Class
-    ( ToText )
-import Data.Text.Encoding
-    ( decodeUtf8 )
-import Fmt
-    ( Buildable (..) )
-
+  ( toStrict,
+  )
 import qualified Data.ByteString.Lazy as BL
+import Data.Functor.Identity
+  ( Identity (..),
+  )
+import Data.Text.Class
+  ( ToText,
+  )
+import Data.Text.Encoding
+  ( decodeUtf8,
+  )
+import Fmt
+  ( Buildable (..),
+  )
+import Prelude
 
 -- | Serialized version of a transaction. Deserializing should at least expose
 -- enough information to compute the `TxId`.
 type TxCBOR = EraValue (K BL.ByteString)
 
 instance Buildable TxCBOR where
-    build
-        = build . decodeUtf8 . convertToBase Base16 . toStrict . extractEraValue
+  build =
+    build . decodeUtf8 . convertToBase Base16 . toStrict . extractEraValue
 
 instance ToText TxCBOR
 
@@ -81,16 +91,17 @@ renderTxToCBOR = applyEraFun serializeTx
 
 -- | CBOR serialization of a tx in any era.
 serializeTx :: EraFun Tx (K BL.ByteString)
-serializeTx = EraFun
-    { byronFun = f
-    , shelleyFun = f
-    , allegraFun = f
-    , maryFun = f
-    , alonzoFun = f
-    , babbageFun = f
+serializeTx =
+  EraFun
+    { byronFun = f,
+      shelleyFun = f,
+      allegraFun = f,
+      maryFun = f,
+      alonzoFun = f,
+      babbageFun = f
     }
   where
-    f :: ToCBOR (TxT era) => Tx era -> K BL.ByteString  era
+    f :: ToCBOR (TxT era) => Tx era -> K BL.ByteString era
     f = K . toLazyByteString . toCBOR . unTx
 
 -- | Parse CBOR into a transaction in any eras
@@ -100,24 +111,27 @@ parseTxFromCBOR = sequenceEraValue . applyEraFun deserializeTx
 
 -- | CBOR deserialization of a tx in any era.
 deserializeTx :: EraFun (K BL.ByteString) (Either DeserialiseFailure :.: Tx)
-deserializeTx = EraFun
-    { byronFun = deserialize $ const runIdentity
-    , shelleyFun = deserialize runA
-    , allegraFun = deserialize runA
-    , maryFun = deserialize runA
-    , alonzoFun = deserialize runA
-    , babbageFun = deserialize runA
+deserializeTx =
+  EraFun
+    { byronFun = deserialize $ const runIdentity,
+      shelleyFun = deserialize runA,
+      allegraFun = deserialize runA,
+      maryFun = deserialize runA,
+      alonzoFun = deserialize runA,
+      babbageFun = deserialize runA
     }
-    where
-    deserialize
-        :: FromCBOR (k (TxT x))
-        => (BL.ByteString -> k (TxT x) -> TxT x)
-        -> K BL.ByteString x
-        -> (Either DeserialiseFailure :.: Tx) x
-    deserialize untag (K txCBOR) = Comp $ Tx .  untag txCBOR . snd
-        <$> deserialiseFromBytes fromCBOR txCBOR
+  where
+    deserialize ::
+      FromCBOR (k (TxT x)) =>
+      (BL.ByteString -> k (TxT x) -> TxT x) ->
+      K BL.ByteString x ->
+      (Either DeserialiseFailure :.: Tx) x
+    deserialize untag (K txCBOR) =
+      Comp $
+        Tx . untag txCBOR . snd
+          <$> deserialiseFromBytes fromCBOR txCBOR
     runA :: BL.ByteString -> Annotator x -> x
     runA txCBOR x = runAnnotator x $ Full txCBOR
 
 instance FromCBOR a => FromCBOR (Identity a) where
-    fromCBOR = fmap Identity fromCBOR
+  fromCBOR = fmap Identity fromCBOR

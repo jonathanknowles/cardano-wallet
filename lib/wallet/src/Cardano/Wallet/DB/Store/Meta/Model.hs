@@ -5,148 +5,156 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeFamilies #-}
 
-{- |
- Copyright: © 2018-2022 IOHK
- License: Apache-2.0
-
-Pure, low level model for a collection of "meta transactions",
-i.e. additional data ('TxMeta') that the wallet stores for each transaction.
-Meta transactions are encoded "as" expressed in DB tables.
-
--}
+-- |
+-- Copyright: © 2018-2022 IOHK
+-- License: Apache-2.0
+--
+-- Pure, low level model for a collection of "meta transactions",
+-- i.e. additional data ('TxMeta') that the wallet stores for each transaction.
+-- Meta transactions are encoded "as" expressed in DB tables.
 module Cardano.Wallet.DB.Store.Meta.Model
-    ( DeltaTxMetaHistory(..)
-    , ManipulateTxMetaHistory(..)
-    , TxMetaHistory(..)
-    , mkTxMetaHistory
-    )
-    where
-
-import Prelude
+  ( DeltaTxMetaHistory (..),
+    ManipulateTxMetaHistory (..),
+    TxMetaHistory (..),
+    mkTxMetaHistory,
+  )
+where
 
 import Cardano.Wallet.DB.Sqlite.Schema
-    ( TxMeta (..) )
+  ( TxMeta (..),
+  )
 import Cardano.Wallet.DB.Sqlite.Types
-    ( TxId (..) )
-import Control.Monad
-    ( MonadPlus (mzero) )
-import Data.Delta
-    ( Delta (..) )
-import Data.Functor
-    ( (<&>) )
-import Data.Generics.Internal.VL
-    ( (^.) )
-import Data.Map.Strict
-    ( Map )
-import Data.Quantity
-    ( Quantity (getQuantity) )
-import Fmt
-    ( Buildable (build) )
-import GHC.Generics
-    ( Generic )
-
+  ( TxId (..),
+  )
 import qualified Cardano.Wallet.Primitive.Types as W
 import qualified Cardano.Wallet.Primitive.Types.Coin as W
 import qualified Cardano.Wallet.Primitive.Types.Tx as W
+import Control.Monad
+  ( MonadPlus (mzero),
+  )
+import Data.Delta
+  ( Delta (..),
+  )
+import Data.Functor
+  ( (<&>),
+  )
+import Data.Generics.Internal.VL
+  ( (^.),
+  )
+import Data.Map.Strict
+  ( Map,
+  )
 import qualified Data.Map.Strict as Map
+import Data.Quantity
+  ( Quantity (getQuantity),
+  )
+import Fmt
+  ( Buildable (build),
+  )
+import GHC.Generics
+  ( Generic,
+  )
+import Prelude
 
 -- | A collection of `TxMeta`, indexed by transaction identifier.
-newtype TxMetaHistory =
-    TxMetaHistory { relations :: Map TxId TxMeta }
-    deriving ( Generic, Eq, Show, Monoid, Semigroup )
+newtype TxMetaHistory = TxMetaHistory {relations :: Map TxId TxMeta}
+  deriving (Generic, Eq, Show, Monoid, Semigroup)
 
 instance Buildable TxMetaHistory where
-    build txs =
-        "TxMetaHistory "
-        <> build (length $ relations txs)
+  build txs =
+    "TxMetaHistory "
+      <> build (length $ relations txs)
 
 -- | Verbs for 'TxMeta' changes
 -- that can be issued independently from the transaction store.
 data ManipulateTxMetaHistory
-    = PruneTxMetaHistory TxId
-    -- ^ Remove a meta if it is /not/ in the ledger.
-    | AgeTxMetaHistory W.SlotNo
-    -- ^ Change the state of any meta to 'Expired'
+  = -- | Remove a meta if it is /not/ in the ledger.
+    PruneTxMetaHistory TxId
+  | -- | Change the state of any meta to 'Expired'
     -- if the given slot is equal or after its expiration slot.
-    | RollBackTxMetaHistory W.SlotNo
-    -- ^ Remove all incoming transactions created after the given slot and
+    AgeTxMetaHistory W.SlotNo
+  | -- | Remove all incoming transactions created after the given slot and
     -- mark all outgoing transactions after the given slot as 'Pending'.
-    deriving ( Eq, Show )
+    RollBackTxMetaHistory W.SlotNo
+  deriving (Eq, Show)
 
 -- | All meta-transactions changes, including the addition of new
 -- meta-transactions, which has to be done in sync with the transactions store.
 data DeltaTxMetaHistory
-    = Manipulate ManipulateTxMetaHistory
-    | Expand TxMetaHistory
-    deriving (Show, Eq)
+  = Manipulate ManipulateTxMetaHistory
+  | Expand TxMetaHistory
+  deriving (Show, Eq)
 
 instance Buildable DeltaTxMetaHistory where
-    build = build . show
+  build = build . show
 
 instance Delta DeltaTxMetaHistory where
-    type Base DeltaTxMetaHistory = TxMetaHistory
-    apply (Expand txs) h = txs <> h
-    apply (Manipulate d) h = apply d h
+  type Base DeltaTxMetaHistory = TxMetaHistory
+  apply (Expand txs) h = txs <> h
+  apply (Manipulate d) h = apply d h
 
 instance Delta ManipulateTxMetaHistory where
-    type Base ManipulateTxMetaHistory = TxMetaHistory
-    apply (PruneTxMetaHistory tid) (TxMetaHistory txs) =
-        TxMetaHistory $ Map.alter f tid txs
-      where
-        f (Just tx@(TxMeta {..})) =
-            if txMetaStatus == W.InLedger
-                then Just tx
-                else Nothing
-        f Nothing = Nothing
-    apply (AgeTxMetaHistory tip) (TxMetaHistory txs) =
-        TxMetaHistory
-        $ txs <&> \meta@TxMeta {..} ->
-            if txMetaStatus == W.Pending && isExpired txMetaSlotExpires
-            then meta { txMetaStatus = W.Expired }
-            else meta
-      where
-        isExpired Nothing = False
-        isExpired (Just tip') = tip' <= tip
-    apply (RollBackTxMetaHistory point) (TxMetaHistory txs) =
-        TxMetaHistory $ Map.mapMaybe rescheduleOrForget txs
-      where
-        rescheduleOrForget :: TxMeta -> Maybe TxMeta
-        rescheduleOrForget meta =
-            let
-                isAfter = txMetaSlot meta > point
-                isIncoming = txMetaDirection meta == W.Incoming
-            in case (isAfter, isIncoming) of
-                   (True,True) -> mzero
-                   (True,False) -> Just
-                       $ meta
-                       { txMetaSlot = point, txMetaStatus = W.Pending }
-                   _ -> Just meta
+  type Base ManipulateTxMetaHistory = TxMetaHistory
+  apply (PruneTxMetaHistory tid) (TxMetaHistory txs) =
+    TxMetaHistory $ Map.alter f tid txs
+    where
+      f (Just tx@(TxMeta {..})) =
+        if txMetaStatus == W.InLedger
+          then Just tx
+          else Nothing
+      f Nothing = Nothing
+  apply (AgeTxMetaHistory tip) (TxMetaHistory txs) =
+    TxMetaHistory $
+      txs <&> \meta@TxMeta {..} ->
+        if txMetaStatus == W.Pending && isExpired txMetaSlotExpires
+          then meta {txMetaStatus = W.Expired}
+          else meta
+    where
+      isExpired Nothing = False
+      isExpired (Just tip') = tip' <= tip
+  apply (RollBackTxMetaHistory point) (TxMetaHistory txs) =
+    TxMetaHistory $ Map.mapMaybe rescheduleOrForget txs
+    where
+      rescheduleOrForget :: TxMeta -> Maybe TxMeta
+      rescheduleOrForget meta =
+        let isAfter = txMetaSlot meta > point
+            isIncoming = txMetaDirection meta == W.Incoming
+         in case (isAfter, isIncoming) of
+              (True, True) -> mzero
+              (True, False) ->
+                Just $
+                  meta
+                    { txMetaSlot = point,
+                      txMetaStatus = W.Pending
+                    }
+              _ -> Just meta
 
 mkTxMetaEntity :: W.WalletId -> W.Tx -> W.TxMeta -> TxMeta
 mkTxMetaEntity wid tx derived =
-    TxMeta
-    { txMetaTxId = TxId $ tx ^. #txId
-    , txMetaWalletId = wid
-    , txMetaStatus = derived ^. #status
-    , txMetaDirection = derived ^. #direction
-    , txMetaSlot = derived ^. #slotNo
-    , txMetaBlockHeight = getQuantity
-          (derived ^. #blockHeight)
-    , txMetaAmount = derived ^. #amount
-    , txMetaFee = fromIntegral . W.unCoin <$> W.fee tx
-    , txMetaSlotExpires = derived ^. #expiry
-    , txMetadata = W.metadata tx
-    , txMetaScriptValidity = W.scriptValidity tx <&> \case
+  TxMeta
+    { txMetaTxId = TxId $ tx ^. #txId,
+      txMetaWalletId = wid,
+      txMetaStatus = derived ^. #status,
+      txMetaDirection = derived ^. #direction,
+      txMetaSlot = derived ^. #slotNo,
+      txMetaBlockHeight =
+        getQuantity
+          (derived ^. #blockHeight),
+      txMetaAmount = derived ^. #amount,
+      txMetaFee = fromIntegral . W.unCoin <$> W.fee tx,
+      txMetaSlotExpires = derived ^. #expiry,
+      txMetadata = W.metadata tx,
+      txMetaScriptValidity =
+        W.scriptValidity tx <&> \case
           W.TxScriptValid -> True
           W.TxScriptInvalid -> False
     }
 
 -- | Compute a 'TxMetaHistory' for a wallet.
 mkTxMetaHistory :: W.WalletId -> [(W.Tx, W.TxMeta)] -> TxMetaHistory
-mkTxMetaHistory wid txs = TxMetaHistory $
+mkTxMetaHistory wid txs =
+  TxMetaHistory $
     Map.fromList
-        [ (TxId $ tx ^. #txId, mkTxMetaEntity wid tx meta)
-            | (tx, meta) <- txs
-        ]
-
-
+      [ (TxId $ tx ^. #txId, mkTxMetaEntity wid tx meta)
+        | (tx, meta) <- txs
+      ]

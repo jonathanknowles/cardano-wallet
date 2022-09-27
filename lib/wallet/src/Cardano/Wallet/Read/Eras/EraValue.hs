@@ -16,67 +16,85 @@
 -- License: Apache-2.0
 --
 -- A datatype that represents values that can be different in any known eras.
---
-
 module Cardano.Wallet.Read.Eras.EraValue
   ( -- * Era bounded values.
-  EraValue (..)
-  , eraValueSerialize
-  , extractEraValue
-  -- * Era specific prisms.
-  , MkEraValue (..)
-  , byron
-  , shelley
-  , allegra
-  , mary
-  , alonzo
-  , babbage
-  , inject
-  , project
-  -- * Specials.
-  , sequenceEraValue
-  )
-  where
+    EraValue (..),
+    eraValueSerialize,
+    extractEraValue,
 
-import Prelude
+    -- * Era specific prisms.
+    MkEraValue (..),
+    byron,
+    shelley,
+    allegra,
+    mary,
+    alonzo,
+    babbage,
+    inject,
+    project,
+
+    -- * Specials.
+    sequenceEraValue,
+  )
+where
 
 import Cardano.Api
-    ( AllegraEra, AlonzoEra, BabbageEra, ByronEra, MaryEra, ShelleyEra )
+  ( AllegraEra,
+    AlonzoEra,
+    BabbageEra,
+    ByronEra,
+    MaryEra,
+    ShelleyEra,
+  )
 import Cardano.Wallet.Read.Eras.KnownEras
-    ( KnownEras )
+  ( KnownEras,
+  )
 import Control.DeepSeq
-    ( NFData )
+  ( NFData,
+  )
 import Data.Either.Extra
-    ( eitherToMaybe )
+  ( eitherToMaybe,
+  )
 import Data.Generics.Internal.VL
-    ( Prism', build, match, prism )
+  ( Prism',
+    build,
+    match,
+    prism,
+  )
+import qualified GHC.Generics as GHC
 import Generics.SOP
-    ( (:.:)
-    , All
-    , Compose
-    , K (..)
-    , NP (..)
-    , NS
-    , ejections
-    , injections
-    , unComp
-    , unK
-    )
+  ( All,
+    Compose,
+    K (..),
+    NP (..),
+    NS,
+    ejections,
+    injections,
+    unComp,
+    unK,
+    (:.:),
+  )
 import Generics.SOP.Classes
 import Generics.SOP.NP
-    ( zipWith_NP )
+  ( zipWith_NP,
+  )
 import Generics.SOP.NS
-    ( collapse_NS, index_NS, sequence'_NS )
-
-import qualified GHC.Generics as GHC
+  ( collapse_NS,
+    index_NS,
+    sequence'_NS,
+  )
+import Prelude
 
 -- | A value which is in one era.
 newtype EraValue f = EraValue (NS f KnownEras)
-    deriving GHC.Generic
+  deriving (GHC.Generic)
 
 deriving instance (All (Compose Show f) KnownEras) => Show (EraValue f)
+
 deriving instance (All (Compose Eq f) KnownEras) => Eq (EraValue f)
+
 deriving instance (All (Compose Ord f) KnownEras) => Ord (EraValue f)
+
 deriving instance (All (Compose NFData f) KnownEras) => NFData (EraValue f)
 
 -- | Extract an era indipendent value.
@@ -115,15 +133,14 @@ alonzo :: MkEraValue f AlonzoEra
 
 -- | Babbage era prism.
 babbage :: MkEraValue f BabbageEra
-
-byron :* shelley :* allegra :* mary :* alonzo :* babbage :* Nil
-  = zipWith_NP g injections ejections
-      where
-        g i e = MkEraValue $ prism (inject' i) (project' e)
-        inject' f =  EraValue . unK . apFn f
-        project' e vb@(EraValue v) = case unComp $ apFn e (K v) of
-          Nothing -> Left vb
-          Just r -> Right r
+byron :* shelley :* allegra :* mary :* alonzo :* babbage :* Nil =
+  zipWith_NP g injections ejections
+  where
+    g i e = MkEraValue $ prism (inject' i) (project' e)
+    inject' f = EraValue . unK . apFn f
+    project' e vb@(EraValue v) = case unComp $ apFn e (K v) of
+      Nothing -> Left vb
+      Just r -> Right r
 
 -- | Inject a value into its era position.
 inject :: MkEraValue f era -> f era -> EraValue f
@@ -135,22 +152,22 @@ project (MkEraValue p) = eitherToMaybe . match p
 
 -- serialization
 
-parseEraValue
-  :: forall a n
-  . (Eq n, Num n)
-  => (a, n)
-  -> Either (a, n) (EraValue (K a))
-parseEraValue (x, era) = case era  of
-    0 -> r byron
-    1 -> r shelley
-    2 -> r allegra
-    3 -> r mary
-    4 -> r alonzo
-    5 -> r babbage
-    _ -> Left (x, era)
-    where
-      r :: MkEraValue (K a) era  -> Either (a, n) (EraValue (K a))
-      r e = Right $ inject e (K x)
+parseEraValue ::
+  forall a n.
+  (Eq n, Num n) =>
+  (a, n) ->
+  Either (a, n) (EraValue (K a))
+parseEraValue (x, era) = case era of
+  0 -> r byron
+  1 -> r shelley
+  2 -> r allegra
+  3 -> r mary
+  4 -> r alonzo
+  5 -> r babbage
+  _ -> Left (x, era)
+  where
+    r :: MkEraValue (K a) era -> Either (a, n) (EraValue (K a))
+    r e = Right $ inject e (K x)
 
 renderEraValue :: EraValue (K b) -> (b, Int)
 renderEraValue e = (extractEraValue e, indexEraValue e)

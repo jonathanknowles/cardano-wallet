@@ -6,43 +6,63 @@
 
 module Cardano.Wallet.DB.Store.Wallets.StoreSpec (spec, genDeltaTxWallets) where
 
-import Prelude
-
 import Cardano.DB.Sqlite
-    ( ForeignKeysSetting (..) )
+  ( ForeignKeysSetting (..),
+  )
 import Cardano.Wallet.DB.Arbitrary
-    ()
+  (
+  )
 import Cardano.Wallet.DB.Fixtures
-    ( WalletProperty, logScale, withDBInMemory, withInitializedWalletProp )
+  ( WalletProperty,
+    logScale,
+    withDBInMemory,
+    withInitializedWalletProp,
+  )
 import Cardano.Wallet.DB.Store.Meta.Model
-    ( DeltaTxMetaHistory (..) )
+  ( DeltaTxMetaHistory (..),
+  )
 import Cardano.Wallet.DB.Store.Meta.ModelSpec
-    ( genDeltasForManipulate )
-import Cardano.Wallet.DB.Store.Wallets.Model
-    ( DeltaTxWalletsHistory (..), DeltaWalletsMetaWithSubmissions (..) )
-import Cardano.Wallet.DB.Store.Wallets.Store
-    ( mkStoreTxWalletsHistory )
-import Data.Generics.Internal.VL
-    ( view )
-import Test.DBVar
-    ( GenDelta, prop_StoreUpdates )
-import Test.Hspec
-    ( Spec, around, describe, it )
-import Test.QuickCheck
-    ( NonEmptyList (getNonEmpty), arbitrary, frequency, property )
-
+  ( genDeltasForManipulate,
+  )
 import qualified Cardano.Wallet.DB.Store.Submissions.ModelSpec as Subs
+import Cardano.Wallet.DB.Store.Wallets.Model
+  ( DeltaTxWalletsHistory (..),
+    DeltaWalletsMetaWithSubmissions (..),
+  )
+import Cardano.Wallet.DB.Store.Wallets.Store
+  ( mkStoreTxWalletsHistory,
+  )
 import qualified Cardano.Wallet.Primitive.Types as W
+import Data.Generics.Internal.VL
+  ( view,
+  )
 import qualified Data.Map.Strict as Map
+import Test.DBVar
+  ( GenDelta,
+    prop_StoreUpdates,
+  )
+import Test.Hspec
+  ( Spec,
+    around,
+    describe,
+    it,
+  )
+import Test.QuickCheck
+  ( NonEmptyList (getNonEmpty),
+    arbitrary,
+    frequency,
+    property,
+  )
+import Prelude
 
 spec :: Spec
 spec = do
-    around (withDBInMemory ForeignKeysDisabled) $ do
-        describe "wallets-transactions store no fk" $ do
-            it "respects store laws" $ property . prop_StoreWalletsLaws
-    around (withDBInMemory ForeignKeysEnabled) $ do
-        describe "wallets-transactions store with fk " $ do
-            it "respects store laws" $ property . prop_StoreWalletsLaws
+  around (withDBInMemory ForeignKeysDisabled) $ do
+    describe "wallets-transactions store no fk" $ do
+      it "respects store laws" $ property . prop_StoreWalletsLaws
+  around (withDBInMemory ForeignKeysEnabled) $ do
+    describe "wallets-transactions store with fk " $ do
+      it "respects store laws" $ property . prop_StoreWalletsLaws
 
 prop_StoreWalletsLaws :: WalletProperty
 prop_StoreWalletsLaws =

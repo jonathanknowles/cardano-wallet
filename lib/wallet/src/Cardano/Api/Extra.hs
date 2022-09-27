@@ -8,31 +8,31 @@
 --
 -- Module containing extra 'Cardano.Api' functionality needed by the wallet.
 module Cardano.Api.Extra
-    ( withShelleyBasedTx
-    , inAnyCardanoEra
-    , asAnyShelleyBasedEra
-    ) where
-
-import Prelude
+  ( withShelleyBasedTx,
+    inAnyCardanoEra,
+    asAnyShelleyBasedEra,
+  )
+where
 
 import Cardano.Api
-    ( CardanoEra (..)
-    , InAnyCardanoEra (..)
-    , InAnyShelleyBasedEra (..)
-    , IsCardanoEra (cardanoEra)
-    , IsShelleyBasedEra
-    , ShelleyBasedEra (..)
-    , Tx
-    )
+  ( CardanoEra (..),
+    InAnyCardanoEra (..),
+    InAnyShelleyBasedEra (..),
+    IsCardanoEra (cardanoEra),
+    IsShelleyBasedEra,
+    ShelleyBasedEra (..),
+    Tx,
+  )
+import Prelude
 
 -- | Apply an era-parameterized function to an existentially-wrapped
 -- tx.
-withShelleyBasedTx
-    :: InAnyShelleyBasedEra Tx
-    -> (forall era. IsShelleyBasedEra era => Tx era -> a)
-    -> a
-withShelleyBasedTx (InAnyShelleyBasedEra _era tx) f
-    = f tx
+withShelleyBasedTx ::
+  InAnyShelleyBasedEra Tx ->
+  (forall era. IsShelleyBasedEra era => Tx era -> a) ->
+  a
+withShelleyBasedTx (InAnyShelleyBasedEra _era tx) f =
+  f tx
 
 -- | Helper function for more easily creating an existential
 -- @InAnyCardanoEra Tx@.
@@ -40,19 +40,19 @@ inAnyCardanoEra :: IsCardanoEra era => Tx era -> InAnyCardanoEra Tx
 inAnyCardanoEra = InAnyCardanoEra cardanoEra
 
 -- | "Downcast" an existentially wrapped tx.
-asAnyShelleyBasedEra
-    :: InAnyCardanoEra a
-    -> Maybe (InAnyShelleyBasedEra a)
+asAnyShelleyBasedEra ::
+  InAnyCardanoEra a ->
+  Maybe (InAnyShelleyBasedEra a)
 asAnyShelleyBasedEra = \case
-    InAnyCardanoEra ByronEra _ ->
-        Nothing
-    InAnyCardanoEra ShelleyEra a ->
-        Just $ InAnyShelleyBasedEra ShelleyBasedEraShelley a
-    InAnyCardanoEra AllegraEra a ->
-        Just $ InAnyShelleyBasedEra ShelleyBasedEraAllegra a
-    InAnyCardanoEra MaryEra a ->
-        Just $ InAnyShelleyBasedEra ShelleyBasedEraMary a
-    InAnyCardanoEra AlonzoEra a ->
-        Just $ InAnyShelleyBasedEra ShelleyBasedEraAlonzo a
-    InAnyCardanoEra BabbageEra a ->
-        Just $ InAnyShelleyBasedEra ShelleyBasedEraBabbage a
+  InAnyCardanoEra ByronEra _ ->
+    Nothing
+  InAnyCardanoEra ShelleyEra a ->
+    Just $ InAnyShelleyBasedEra ShelleyBasedEraShelley a
+  InAnyCardanoEra AllegraEra a ->
+    Just $ InAnyShelleyBasedEra ShelleyBasedEraAllegra a
+  InAnyCardanoEra MaryEra a ->
+    Just $ InAnyShelleyBasedEra ShelleyBasedEraMary a
+  InAnyCardanoEra AlonzoEra a ->
+    Just $ InAnyShelleyBasedEra ShelleyBasedEraAlonzo a
+  InAnyCardanoEra BabbageEra a ->
+    Just $ InAnyShelleyBasedEra ShelleyBasedEraBabbage a

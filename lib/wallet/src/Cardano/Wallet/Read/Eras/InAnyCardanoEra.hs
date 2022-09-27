@@ -1,69 +1,78 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
 
 -- |
 -- Copyright: © 2020-2022 IOHK
 -- License: Apache-2.0
 --
 -- An isomorphism between 'InAnyCardanoEra' and 'EraValue'.
---
-
 module Cardano.Wallet.Read.Eras.InAnyCardanoEra
-    ( isoInAnyCardanoEra
-    )
-  where
-
-import Prelude
+  ( isoInAnyCardanoEra,
+  )
+where
 
 import Cardano.Api
-    ( CardanoEra (..), InAnyCardanoEra (InAnyCardanoEra), IsCardanoEra )
+  ( CardanoEra (..),
+    InAnyCardanoEra (InAnyCardanoEra),
+    IsCardanoEra,
+  )
 import Cardano.Wallet.Read.Eras.EraValue
-    ( EraValue (..)
-    , MkEraValue (..)
-    , allegra
-    , alonzo
-    , babbage
-    , byron
-    , eraValueSerialize
-    , mary
-    , shelley
-    )
+  ( EraValue (..),
+    MkEraValue (..),
+    allegra,
+    alonzo,
+    babbage,
+    byron,
+    eraValueSerialize,
+    mary,
+    shelley,
+  )
 import Cardano.Wallet.Read.Eras.KnownEras
-    ( KnownEras )
+  ( KnownEras,
+  )
 import Data.Generics.Internal.VL
-    ( Iso', build, iso )
+  ( Iso',
+    build,
+    iso,
+  )
 import Generics.SOP
-    ( K (..), NP (..), Proxy (Proxy) )
+  ( K (..),
+    NP (..),
+    Proxy (Proxy),
+  )
 import Generics.SOP.Classes
 import Generics.SOP.NP
-    ( cmap_NP )
+  ( cmap_NP,
+  )
 import Generics.SOP.NS
-    ( ap_NS )
+  ( ap_NS,
+  )
+import Prelude
 
 toInAnyCardanoEra :: EraValue f -> InAnyCardanoEra f
-toInAnyCardanoEra (EraValue f)
-    = fst . build eraValueSerialize . EraValue . ap_NS existentials $ f
-    where
+toInAnyCardanoEra (EraValue f) =
+  fst . build eraValueSerialize . EraValue . ap_NS existentials $ f
+  where
     cardanoEras :: NP CardanoEra KnownEras
     cardanoEras =
-        ByronEra
-            :* ShelleyEra
-            :* AllegraEra
-            :* MaryEra
-            :* AlonzoEra
-            :* BabbageEra
-            :* Nil
+      ByronEra
+        :* ShelleyEra
+        :* AllegraEra
+        :* MaryEra
+        :* AlonzoEra
+        :* BabbageEra
+        :* Nil
 
-    mkExistential
-        :: IsCardanoEra era
-        => CardanoEra era
-        -> (f -.-> K (InAnyCardanoEra f)) era
+    mkExistential ::
+      IsCardanoEra era =>
+      CardanoEra era ->
+      (f -.-> K (InAnyCardanoEra f)) era
     mkExistential e = Fn (K . InAnyCardanoEra e)
 
     existentials = cmap_NP (Proxy @IsCardanoEra) mkExistential cardanoEras

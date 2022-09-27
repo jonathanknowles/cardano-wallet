@@ -10,48 +10,56 @@
 -- License: Apache-2.0
 --
 -- Provides the 'ProtocolMagic' type and related constants.
---
 module Cardano.Wallet.Primitive.Types.ProtocolMagic
-    ( ProtocolMagic (..)
-    , mainnetMagic
-    , testnetMagic
-    ) where
-
-import Prelude
+  ( ProtocolMagic (..),
+    mainnetMagic,
+    testnetMagic,
+  )
+where
 
 import Control.DeepSeq
-    ( NFData (..) )
+  ( NFData (..),
+  )
 import Data.Aeson
-    ( FromJSON (..), ToJSON (..) )
+  ( FromJSON (..),
+    ToJSON (..),
+  )
 import Data.Int
-    ( Int32 )
+  ( Int32,
+  )
 import Data.Proxy
-    ( Proxy (..) )
-import Data.Text.Class
-    ( FromText (..), ToText (..) )
-import GHC.Generics
-    ( Generic )
-import GHC.TypeLits
-    ( KnownNat, natVal )
-import Numeric.Natural
-    ( Natural )
-
+  ( Proxy (..),
+  )
 import qualified Data.Text as T
+import Data.Text.Class
+  ( FromText (..),
+    ToText (..),
+  )
+import GHC.Generics
+  ( Generic,
+  )
+import GHC.TypeLits
+  ( KnownNat,
+    natVal,
+  )
+import Numeric.Natural
+  ( Natural,
+  )
+import Prelude
 
 -- | Magic constant associated with a given network.
---
-newtype ProtocolMagic = ProtocolMagic { getProtocolMagic :: Int32 }
-    deriving (Generic, Show, Eq, NFData, FromJSON, ToJSON)
+newtype ProtocolMagic = ProtocolMagic {getProtocolMagic :: Int32}
+  deriving (Generic, Show, Eq, NFData, FromJSON, ToJSON)
 
 instance ToText ProtocolMagic where
-    toText (ProtocolMagic pm) = T.pack (show pm)
+  toText (ProtocolMagic pm) = T.pack (show pm)
 
 instance FromText ProtocolMagic where
-    fromText = fmap (ProtocolMagic . fromIntegral @Natural) . fromText
+  fromText = fmap (ProtocolMagic . fromIntegral @Natural) . fromText
 
 -- | Hard-coded protocol magic for the Byron MainNet
 mainnetMagic :: ProtocolMagic
-mainnetMagic =  ProtocolMagic 764824073
+mainnetMagic = ProtocolMagic 764824073
 
 -- | Derive testnet magic from a type-level Nat
 testnetMagic :: forall pm. KnownNat pm => ProtocolMagic

@@ -1,35 +1,45 @@
 {-# LANGUAGE TypeApplications #-}
 
 module Cardano.Wallet.Primitive.Types.TokenQuantity.Gen
-    ( chooseTokenQuantity
-    , genTokenQuantity
-    , genTokenQuantityPositive
-    , genTokenQuantityFullRange
-    , shrinkTokenQuantity
-    , shrinkTokenQuantityPositive
-    , shrinkTokenQuantityFullRange
-    , genTokenQuantityPartition
-    ) where
-
-import Prelude
+  ( chooseTokenQuantity,
+    genTokenQuantity,
+    genTokenQuantityPositive,
+    genTokenQuantityFullRange,
+    shrinkTokenQuantity,
+    shrinkTokenQuantityPositive,
+    shrinkTokenQuantityFullRange,
+    genTokenQuantityPartition,
+  )
+where
 
 import Cardano.Wallet.Primitive.Types.TokenQuantity
-    ( TokenQuantity (..) )
-import Control.Monad
-    ( replicateM )
-import Data.Coerce
-    ( coerce )
-import Data.List.NonEmpty
-    ( NonEmpty )
-import Data.Word
-    ( Word64 )
-import Test.QuickCheck
-    ( Gen, choose, frequency, shrink, sized )
-import Test.QuickCheck.Extra
-    ( chooseNatural )
-
+  ( TokenQuantity (..),
+  )
 import qualified Cardano.Wallet.Primitive.Types.TokenQuantity as TokenQuantity
+import Control.Monad
+  ( replicateM,
+  )
+import Data.Coerce
+  ( coerce,
+  )
+import Data.List.NonEmpty
+  ( NonEmpty,
+  )
 import qualified Data.List.NonEmpty as NE
+import Data.Word
+  ( Word64,
+  )
+import Test.QuickCheck
+  ( Gen,
+    choose,
+    frequency,
+    shrink,
+    sized,
+  )
+import Test.QuickCheck.Extra
+  ( chooseNatural,
+  )
+import Prelude
 
 --------------------------------------------------------------------------------
 -- Choosing token quantities from a range.
@@ -57,8 +67,8 @@ genTokenQuantityPositive :: Gen TokenQuantity
 genTokenQuantityPositive = sized $ \n -> quantityFromInt <$> choose (1, max 1 n)
 
 shrinkTokenQuantityPositive :: TokenQuantity -> [TokenQuantity]
-shrinkTokenQuantityPositive
-    = fmap quantityFromInteger
+shrinkTokenQuantityPositive =
+  fmap quantityFromInteger
     . filter (> 0)
     . shrink
     . quantityToInteger
@@ -75,14 +85,14 @@ shrinkTokenQuantityPositive
 --
 -- This can be useful when testing roundtrip conversions between different
 -- types.
---
 genTokenQuantityFullRange :: Gen TokenQuantity
-genTokenQuantityFullRange = frequency
-    [ ( 1, pure minTokenQuantity )
-    , ( 1, pure maxTokenQuantity )
-    , ( 8
-      , quantityFromInteger <$>
-        choose (1, quantityToInteger maxTokenQuantity - 1)
+genTokenQuantityFullRange =
+  frequency
+    [ (1, pure minTokenQuantity),
+      (1, pure maxTokenQuantity),
+      ( 8,
+        quantityFromInteger
+          <$> choose (1, quantityToInteger maxTokenQuantity - 1)
       )
     ]
   where
@@ -93,9 +103,9 @@ genTokenQuantityFullRange = frequency
 
 shrinkTokenQuantityFullRange :: TokenQuantity -> [TokenQuantity]
 shrinkTokenQuantityFullRange =
-    -- Given that we may have a large value, we limit the number of results
-    -- returned in order to avoid processing long lists of shrunken values.
-    take 8 . shrinkTokenQuantity
+  -- Given that we may have a large value, we limit the number of results
+  -- returned in order to avoid processing long lists of shrunken values.
+  take 8 . shrinkTokenQuantity
 
 --------------------------------------------------------------------------------
 -- Partitioning token quantities
@@ -107,15 +117,17 @@ shrinkTokenQuantityFullRange =
 --
 -- prop> forAll (genTokenQuantityPartition q i) $ (==       q) . fold
 -- prop> forAll (genTokenQuantityPartition q i) $ (== max 1 i) . length
---
-genTokenQuantityPartition
-    :: TokenQuantity -> Int -> Gen (NonEmpty TokenQuantity)
+genTokenQuantityPartition ::
+  TokenQuantity -> Int -> Gen (NonEmpty TokenQuantity)
 genTokenQuantityPartition c i =
-    TokenQuantity.partitionDefault c <$> genWeights
+  TokenQuantity.partitionDefault c <$> genWeights
   where
     genWeights :: Gen (NonEmpty TokenQuantity)
-    genWeights = NE.fromList <$> replicateM (max 1 i)
-        (chooseTokenQuantity (TokenQuantity 1, max (TokenQuantity 1) c))
+    genWeights =
+      NE.fromList
+        <$> replicateM
+          (max 1 i)
+          (chooseTokenQuantity (TokenQuantity 1, max (TokenQuantity 1) c))
 
 --------------------------------------------------------------------------------
 -- Internal functions
@@ -126,10 +138,10 @@ quantityToInteger (TokenQuantity q) = fromIntegral q
 
 quantityFromInt :: Int -> TokenQuantity
 quantityFromInt i
-    | i < 0 = error $ "Unable to convert integer to token quantity: " <> show i
-    | otherwise = TokenQuantity $ fromIntegral i
+  | i < 0 = error $ "Unable to convert integer to token quantity: " <> show i
+  | otherwise = TokenQuantity $ fromIntegral i
 
 quantityFromInteger :: Integer -> TokenQuantity
 quantityFromInteger i
-    | i < 0 = error $ "Unable to convert integer to token quantity: " <> show i
-    | otherwise = TokenQuantity $ fromIntegral i
+  | i < 0 = error $ "Unable to convert integer to token quantity: " <> show i
+  | otherwise = TokenQuantity $ fromIntegral i

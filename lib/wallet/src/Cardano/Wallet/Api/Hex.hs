@@ -1,21 +1,23 @@
 {-# LANGUAGE DerivingVia #-}
 
 module Cardano.Wallet.Api.Hex
-    ( hexText
-    , fromHexText
-    )
-    where
-
-import Prelude
+  ( hexText,
+    fromHexText,
+  )
+where
 
 import Cardano.Wallet.Primitive.AddressDerivation
-    ( fromHex, hex )
+  ( fromHex,
+    hex,
+  )
 import Data.ByteString
-    ( ByteString )
+  ( ByteString,
+  )
 import Data.Text
-    ( Text )
-
+  ( Text,
+  )
 import qualified Data.Text.Encoding as T
+import Prelude
 
 hexText :: ByteString -> Text
 hexText = T.decodeLatin1 . hex
