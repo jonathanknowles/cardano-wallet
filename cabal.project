@@ -78,6 +78,7 @@ packages:
   lib/primitive/
   lib/read
   lib/secrets
+  lib/simulation
   lib/std-gen-seed/
   lib/temporary-extra/
   lib/test-utils/
@@ -295,6 +296,9 @@ package cardano-wallet-integration
   tests: True
 
 package cardano-wallet-test-utils
+  tests: True
+
+package simulation
   tests: True
 
 package std-gen-seed

@@ -144,6 +144,9 @@ cradle:
     - path: "lib/secrets/test"
       component: "cardano-wallet-secrets:test:test"
 
+    - path: "lib/simulation/lib"
+      component: "lib:simulation"
+
     - path: "lib/std-gen-seed/src"
       component: "lib:std-gen-seed"
 

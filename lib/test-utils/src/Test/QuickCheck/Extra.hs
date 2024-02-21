@@ -29,8 +29,11 @@ module Test.QuickCheck.Extra
     -- * Generating values purely
     , GenSeed (..)
     , GenSize (..)
+    , GenCount (..)
     , genSizeDefault
     , generateWith
+    , arbitraryWith
+    , arbitrarySample
 
       -- * Shrinking
     , liftShrinker
@@ -281,6 +284,8 @@ newtype GenSeed = GenSeed Int
 --
 newtype GenSize = GenSize Int
 
+newtype GenCount = GenCount Int
+
 -- | A value of 'GenSize' that's identical to the default QuickCheck size
 --   parameter.
 --
@@ -295,6 +300,25 @@ genSizeDefault = GenSize 30
 generateWith :: GenSeed -> GenSize -> Gen a -> a
 generateWith (GenSeed seed) (GenSize size) (MkGen runGen) =
     runGen (mkQCGen seed) size
+
+-- | Generates a value purely, according to the given parameters.
+--
+-- This function is an alternative to the standard QuickCheck 'arbitrary'
+-- function.
+--
+arbitraryWith :: Arbitrary a => GenSeed -> GenSize -> a
+arbitraryWith genSeed genSize = generateWith genSeed genSize arbitrary
+
+arbitrarySample
+    :: forall a. (Arbitrary a, Ord a)
+    => GenCount
+    -> GenSize
+    -> Set a
+arbitrarySample (GenCount count) (GenSize sizeMax) =
+    foldMap f [1 .. count]
+  where
+    f :: Int -> Set a
+    f i = Set.singleton $ arbitraryWith (GenSeed i) (GenSize (i `mod` sizeMax))
 
 --------------------------------------------------------------------------------
 -- Evaluating shrinkers

@@ -19,6 +19,13 @@ import Cardano.Wallet.Primitive.Ledger.Convert
     , toLedgerTimelockScript
     , toWalletScript
     )
+import Cardano.Wallet.Primitive.Types.Address
+    ( Address
+    )
+import Cardano.Wallet.Primitive.Types.Address.Gen
+    ( genAddress
+    , shrinkAddress
+    )
 import Cardano.Wallet.Primitive.Types.AssetName
     ( AssetName
     )
@@ -103,6 +110,7 @@ spec = describe "Cardano.Wallet.Primitive.Ledger.ConvertSpec" $
 
     describe "Roundtrip conversions" $ do
 
+        ledgerRoundtrip $ Proxy @Address
         ledgerRoundtrip $ Proxy @Coin
         ledgerRoundtrip $ Proxy @TokenBundle
         ledgerRoundtrip $ Proxy @AssetName
@@ -141,6 +149,10 @@ ledgerRoundtrip proxy = it title $
 --------------------------------------------------------------------------------
 -- Arbitraries
 --------------------------------------------------------------------------------
+
+instance Arbitrary Address where
+    arbitrary = genAddress
+    shrink = shrinkAddress
 
 instance Arbitrary Coin where
     -- This instance is used to test roundtrip conversions, so it's important

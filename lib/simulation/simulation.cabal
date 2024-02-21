@@ -1,0 +1,96 @@
+cabal-version:      3.0
+name:               simulation
+version:            2023.12.18
+synopsis:           Simulation.
+description:        Please see README.md.
+homepage:           https://github.com/cardano-foundation/cardano-wallet
+author:             Cardano Foundation (High Assurance Lab)
+maintainer:         hal@cardanofoundation.org
+copyright:          2018-2022 IOHK, 2023-2024 Cardano Foundation
+license:            Apache-2.0
+category:           Blockchain, Cardano
+build-type:         Simple
+
+common language
+  default-language:   Haskell2010
+  default-extensions:
+    NoImplicitPrelude
+    OverloadedStrings
+
+common opts-lib
+  ghc-options: -Wall -Wcompat -fwarn-redundant-constraints
+
+  if flag(release)
+    ghc-options: -O2 -Werror
+
+common opts-exe
+  ghc-options: -threaded -rtsopts -Wall
+
+  if flag(release)
+    ghc-options: -O2 -Werror
+
+flag release
+  description: Enable optimization and `-Werror`
+  default:     False
+  manual:      True
+
+library
+  import:          language, opts-lib
+  hs-source-dirs:  lib
+  build-depends:
+    , base
+    , bimap
+    , bytestring
+    , cardano-api
+    , cardano-balance-tx:{internal}
+    , cardano-crypto-wrapper
+    , cardano-ledger-allegra
+    , cardano-ledger-alonzo
+    , cardano-ledger-binary
+    , cardano-ledger-api
+    , cardano-ledger-babbage
+    , cardano-ledger-byron
+    , cardano-ledger-conway
+    , cardano-ledger-core
+    , cardano-ledger-core:testlib
+    , cardano-ledger-mary:{cardano-ledger-mary,testlib}
+    , cardano-slotting
+    , cardano-strict-containers
+    , cardano-wallet-primitive
+    , cardano-wallet-read
+    , cardano-wallet-test-utils
+    , containers
+    , monoidmap
+    , monoid-subclasses
+    , pretty-simple
+    , QuickCheck
+    , text
+    , time
+    , transformers
+  exposed-modules:
+      Data.Bag
+      Deriving
+      Simulation
+      Simulation.Model.Basic
+      Simulation.Model.Indexed
+      Simulation.Implementation
+      Simulation.Implementation.Internal
+      Simulation.Prelude
+      Simulation.Test
+
+test-suite test
+  import:             language, opts-exe
+  ghc-options:        -with-rtsopts=-M2G -with-rtsopts=-N4
+  type:               exitcode-stdio-1.0
+  hs-source-dirs:     test/spec
+  main-is:            run-test-suite.hs
+  build-depends:
+    , base
+    , cardano-wallet-test-utils
+    , hspec
+    , hspec-core
+    , with-utf8
+  build-tool-depends: hspec-discover:hspec-discover
+  other-modules:
+    Spec
+    SpecHook
