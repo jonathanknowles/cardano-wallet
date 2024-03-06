@@ -55,11 +55,8 @@ import Deriving
     , AsShown (AsShown)
     , Prefix (Prefix)
     )
-import GHC.Exts
-    ( IsList (fromList)
-    )
 import GHC.IsList
-    ( IsList
+    ( IsList (fromList)
     )
 import Numeric.Natural
     ( Natural
