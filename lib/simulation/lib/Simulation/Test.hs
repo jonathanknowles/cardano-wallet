@@ -34,8 +34,8 @@ testBalancedTx =
 testPartialTx :: PartialTx
 testPartialTx = PartialTx
     { outputs =
-    [ [ 3_000_000 × Lovelace ]
-    , [ 5_000_000 × Lovelace ]
+      [ [ 3_000_000 × Lovelace ]
+      , [ 5_000_000 × Lovelace ]
       ]
     }
 
