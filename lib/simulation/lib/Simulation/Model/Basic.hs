@@ -90,7 +90,7 @@ newtype TxBalancer = TxBalancer
 newtype Value = Value (Bag Asset)
     deriving (Eq, Ord) via AsShown (CountList (Bag Asset))
     deriving IsList via CountList (Bag Asset)
-    deriving Show via Prefix "Coin" (AsList Value)
+    deriving Show via Prefix "Value" (AsList Value)
     deriving newtype
         ( Cancellative
         , Commutative
