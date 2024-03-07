@@ -8,7 +8,8 @@
 module Simulation.Test where
 
 import Data.Bag
-    ( (×) )
+    ( (×)
+    )
 import Data.Either
     ( Either
     )
@@ -16,7 +17,7 @@ import Simulation.Implementation
     ( txBalancer
     )
 import Simulation.Model.Basic
-    ( Asset (Lovelace, Asset)
+    ( Asset (Asset, Lovelace)
     , BalanceTxError
     , PartialTx (PartialTx, outputs)
     , Tx
@@ -33,8 +34,8 @@ testBalancedTx =
 testPartialTx :: PartialTx
 testPartialTx = PartialTx
     { outputs =
-    [ [ 1_000_000 × Lovelace ]
-    , [ 3_000_000 × Lovelace ]
+    [ [ 3_000_000 × Lovelace ]
+    , [ 5_000_000 × Lovelace ]
       ]
     }
 
@@ -45,8 +46,8 @@ testWallet =
     , [ 3_000_000 × Lovelace ]
     , [ 4_000_000 × Lovelace ]
     , [ 1_000_000 × Lovelace, 1 × Asset "🍎" ]
-    , [ 1_000_000 × Lovelace, 2 × Asset "你好" ]
-    , [ 1_000_000 × Lovelace, 3 × Asset "C" ]
-    , [ 1_000_000 × Lovelace, 4 × Asset "D" ]
+    , [ 1_000_000 × Lovelace, 2 × Asset "🍌" ]
+    , [ 1_000_000 × Lovelace, 3 × Asset "🥥" ]
+    , [ 1_000_000 × Lovelace, 4 × Asset "🫐" ]
     , [ 8_000_000 × Lovelace, 1 × Asset "X", 1 × Asset "Y", 1 × Asset "Z" ]
     ]

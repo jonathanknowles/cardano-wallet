@@ -48,7 +48,7 @@ data Address
 data IndexedTx = IndexedTx
     { inputs :: [TxIn]
     , outputs :: [TxOut]
-    , fee :: Fee
+    , fee :: Value
     }
     deriving stock (Eq, Show)
 

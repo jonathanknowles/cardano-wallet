@@ -7,7 +7,6 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE NoFieldSelectors #-}
-{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
@@ -23,13 +22,10 @@ import Prelude hiding
 import Data.Bag
     ( Bag
     , MultiplicityList (MultiplicityList)
-    , UnaryList (UnaryList), type (:×:) ((:×:))
+    , UnaryList (UnaryList)
     )
 import Data.Foldable
     ( Foldable (fold)
-    )
-import Data.Monoid
-    ( Sum (Sum)
     )
 import Data.Monoid.GCD
     ( OverlappingGCDMonoid
@@ -49,9 +45,13 @@ import Data.Semigroup.Cancellative
     , RightCancellative
     , RightReductive
     )
+import Data.String
+    ( IsString (fromString)
+    )
 import Data.Text
     ( Text
     )
+import qualified Data.Text as Text
 import Deriving
     ( AsList (AsList)
     , AsShown (AsShown)
@@ -60,11 +60,6 @@ import Deriving
 import GHC.IsList
     ( IsList (fromList)
     )
-import Numeric.Natural
-    ( Natural
-    )
-import Data.String (IsString (fromString))
-import qualified Data.Text as Text
 
 --------------------------------------------------------------------------------
 -- Types
@@ -76,11 +71,6 @@ data Asset = Lovelace | Asset Text
 instance IsString Asset where
     fromString = Asset . Text.pack
 
-newtype Fee = Fee Natural
-    deriving stock (Eq, Ord, Show)
-    deriving newtype Num
-    deriving (Semigroup, Monoid, MonoidNull) via Sum Natural
-
 data PartialTx = PartialTx
     { outputs :: [Value]
     }
@@ -90,7 +80,7 @@ data Tx = Tx
     { inputs :: [Value]
     , outputs :: [Value]
     , change :: [Value]
-    , fee :: Fee
+    , fee :: Value
     }
     deriving stock (Eq, Show)
 
@@ -100,7 +90,7 @@ newtype TxBalancer = TxBalancer
 newtype Value = Value (Bag Asset)
     deriving (Eq, Ord) via AsShown (MultiplicityList (Bag Asset))
     deriving IsList via MultiplicityList (Bag Asset)
-    deriving Show via Prefix "Value" (AsList Value)
+    deriving Show via Prefix "Coin" (AsList Value)
     deriving newtype
         ( Cancellative
         , Commutative
@@ -152,15 +142,12 @@ applyTxToWallet tx wallet =
     receiveChange :: Tx -> Wallet -> Wallet
     receiveChange Tx {change} = (<> fromList change)
 
-feeToValue :: Fee -> Value
-feeToValue (Fee n) = [n :×: Lovelace]
-
 txValueIn :: Tx -> Value
 txValueIn Tx {inputs} = fold inputs
 
 txValueOut :: Tx -> Value
 txValueOut Tx {outputs, change, fee} =
-    fold outputs <> fold change <> feeToValue fee
+    fold outputs <> fold change <> fee
 
 txValueDeficit :: Tx -> Value
 txValueDeficit tx = txValueOut tx <\> txValueIn tx

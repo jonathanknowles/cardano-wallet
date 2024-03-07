@@ -6,6 +6,7 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE NumericUnderscores #-}
+{-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -172,6 +173,10 @@ import Control.Monad.Random.NonRandom
 import Control.Monad.Trans.Except
     ( runExceptT
     )
+import Data.Bag
+    ( (:×:) ((:×:))
+    , (×)
+    )
 import Data.Bifunctor
     ( Bifunctor (bimap)
     )
@@ -221,7 +226,6 @@ import Test.QuickCheck.Extra
     , GenSize (GenSize)
     , arbitrarySample
     )
-import Data.Bag ((×), (:×:) ((:×:)))
 
 --------------------------------------------------------------------------------
 -- Type synonyms
@@ -398,7 +402,7 @@ fromLedgerTx tx = case Write.recentEra @era of
                                 , outputs
                                     = fromLedgerTxOut
                                     . Ledger.sizedValue <$> F.toList btbOutputs
-                                , fee = Fee (fromIntegral f)
+                                , fee = [fromIntegral f × Lovelace]
                                 }
     Write.RecentEraConway ->
         undefined
