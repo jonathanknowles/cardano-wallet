@@ -60,35 +60,34 @@ instance (Show n, Show a) => Show (n :×: a) where
 (×) :: Natural -> a -> Natural :×: a
 n × a = n :×: a
 
--- MultipleList
-newtype MultiplicityList a = MultiplicityList a
+newtype CountList a = CountList a
 newtype UnaryList a = UnaryList a
 
-instance Ord a => IsList (MultiplicityList (Bag a)) where
-    type Item (MultiplicityList (Bag a)) = Natural :×: a
-    fromList = coerce fromMultiplicityList
-    toList = coerce toMultiplicityList
+instance Ord a => IsList (CountList (Bag a)) where
+    type Item (CountList (Bag a)) = Natural :×: a
+    fromList = coerce fromCountList
+    toList = coerce toCountList
 
 instance Ord a => IsList (UnaryList (Bag a)) where
     type Item (UnaryList (Bag a)) = a
     fromList = coerce fromUnaryList
     toList = coerce toUnaryList
 
-instance Show a => Show (MultiplicityList (Bag a)) where
-    show (MultiplicityList m) =
-        "fromMultiplicityList " <> show (toMultiplicityList m)
+instance Show a => Show (CountList (Bag a)) where
+    show (CountList m) =
+        "fromCountList " <> show (toCountList m)
 
 instance Show a => Show (UnaryList (Bag a)) where
     show (UnaryList m) =
         "fromUnaryList " <> show (toUnaryList m)
 
-fromMultiplicityList :: Ord a => [Natural :×: a] -> Bag a
-fromMultiplicityList = Bag . MonoidMap.fromList . fmap fromMultiple
+fromCountList :: Ord a => [Natural :×: a] -> Bag a
+fromCountList = Bag . MonoidMap.fromList . fmap fromMultiple
   where
     fromMultiple (n :×: a) = (a, Sum n)
 
-toMultiplicityList :: Bag a -> [Natural :×: a]
-toMultiplicityList (Bag s) = fmap toMultiple . MonoidMap.toList $ s
+toCountList :: Bag a -> [Natural :×: a]
+toCountList (Bag s) = fmap toMultiple . MonoidMap.toList $ s
   where
     toMultiple (a, Sum n) = (n :×: a)
 
@@ -96,7 +95,7 @@ fromUnaryList :: Ord a => [a] -> Bag a
 fromUnaryList = Bag . MonoidMap.fromList . fmap (, Sum 1)
 
 toUnaryList :: Bag a -> [a]
-toUnaryList s = f =<< toMultiplicityList s
+toUnaryList s = f =<< toCountList s
   where
     f :: (Natural :×: a) -> [a]
     f (n :×: a)

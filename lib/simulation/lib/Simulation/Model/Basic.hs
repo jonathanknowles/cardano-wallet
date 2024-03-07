@@ -21,7 +21,7 @@ import Prelude hiding
 
 import Data.Bag
     ( Bag
-    , MultiplicityList (MultiplicityList)
+    , CountList (CountList)
     , UnaryList (UnaryList)
     )
 import Data.Foldable
@@ -88,8 +88,8 @@ newtype TxBalancer = TxBalancer
     { balanceTx :: Wallet -> PartialTx -> Either BalanceTxError Tx }
 
 newtype Value = Value (Bag Asset)
-    deriving (Eq, Ord) via AsShown (MultiplicityList (Bag Asset))
-    deriving IsList via MultiplicityList (Bag Asset)
+    deriving (Eq, Ord) via AsShown (CountList (Bag Asset))
+    deriving IsList via CountList (Bag Asset)
     deriving Show via Prefix "Coin" (AsList Value)
     deriving newtype
         ( Cancellative
@@ -107,7 +107,7 @@ newtype Value = Value (Bag Asset)
         )
 
 newtype Wallet = Wallet (Bag Value)
-    deriving (Eq, Ord) via AsShown (MultiplicityList (Bag Value))
+    deriving (Eq, Ord) via AsShown (CountList (Bag Value))
     deriving IsList via UnaryList (Bag Value)
     deriving Show via Prefix "Wallet" (AsList Wallet)
     deriving newtype
