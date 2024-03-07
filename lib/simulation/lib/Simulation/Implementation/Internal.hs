@@ -9,10 +9,10 @@
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE UndecidableInstances #-}
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-{-# HLINT ignore "Avoid restricted alias" #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# HLINT ignore "Avoid restricted alias" #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
 module Simulation.Implementation.Internal where
 

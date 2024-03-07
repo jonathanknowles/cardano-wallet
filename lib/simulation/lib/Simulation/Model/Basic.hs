@@ -9,9 +9,9 @@
 {-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-{-# HLINT ignore "Use newtype instead of data" #-}
 {-# HLINT ignore "Avoid restricted alias" #-}
+{-# HLINT ignore "Use newtype instead of data" #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
 module Simulation.Model.Basic where
 
