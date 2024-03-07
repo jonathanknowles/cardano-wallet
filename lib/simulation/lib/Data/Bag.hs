@@ -43,6 +43,7 @@ import GHC.IsList
 import Numeric.Natural
     ( Natural
     )
+import Data.Set (Set)
 
 newtype Bag a = Bag (MonoidMap a (Sum Natural))
     deriving stock Eq
@@ -51,7 +52,7 @@ newtype Bag a = Bag (MonoidMap a (Sum Natural))
     deriving newtype (LeftCancellative, RightCancellative, Cancellative)
     deriving newtype (OverlappingGCDMonoid, Monus)
 
-data n :×: a = n :×: a
+data n :×: a = !n :×: !a
     deriving stock Eq
 
 instance (Show n, Show a) => Show (n :×: a) where
@@ -101,3 +102,6 @@ toUnaryList s = f =<< toCountList s
     f (n :×: a)
         | n == 0 = []
         | otherwise = a : f ((n - 1) :×: a)
+
+support :: Bag a -> Set a
+support (Bag m) = MonoidMap.nonNullKeys m
