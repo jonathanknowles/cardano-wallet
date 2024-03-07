@@ -134,13 +134,13 @@ newtype BalanceTxError = BalanceTxError String
 
 applyTxToWallet :: Tx -> Wallet -> Maybe Wallet
 applyTxToWallet tx wallet =
-    receiveChange tx <$> consumeInputs tx wallet
+    insertChange tx <$> removeInputs tx wallet
   where
-    consumeInputs :: Tx -> Wallet -> Maybe Wallet
-    consumeInputs Tx {inputs} = (</> fromList inputs)
+    removeInputs :: Tx -> Wallet -> Maybe Wallet
+    removeInputs Tx {inputs} = (</> fromList inputs)
 
-    receiveChange :: Tx -> Wallet -> Wallet
-    receiveChange Tx {change} = (<> fromList change)
+    insertChange :: Tx -> Wallet -> Wallet
+    insertChange Tx {change} = (<> fromList change)
 
 txValueIn :: Tx -> Value
 txValueIn Tx {inputs} = fold inputs
