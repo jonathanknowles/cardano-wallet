@@ -35,13 +35,13 @@ instance
   where
     show (AsList a) = show (toList a)
 
-newtype AsShown a = AsShown a
+newtype AsShow a = AsShow a
 
-instance Show a => Eq (AsShown a) where
-    (==) = (==) `on` (show . (\(AsShown a) -> a))
+instance Show a => Eq (AsShow a) where
+    (==) = (==) `on` (show . (\(AsShow a) -> a))
 
-instance Show a => Ord (AsShown a) where
-    (<=) = (<=) `on` (show . (\(AsShown a) -> a))
+instance Show a => Ord (AsShow a) where
+    (<=) = (<=) `on` (show . (\(AsShow a) -> a))
 
 newtype Prefix (prefix :: Symbol) a = Prefix a
 

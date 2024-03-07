@@ -54,7 +54,7 @@ import Data.Text
 import qualified Data.Text as Text
 import Deriving
     ( AsList (AsList)
-    , AsShown (AsShown)
+    , AsShow (AsShow)
     , Prefix (Prefix)
     )
 import GHC.IsList
@@ -88,7 +88,7 @@ newtype TxBalancer = TxBalancer
     { balanceTx :: Wallet -> PartialTx -> Either BalanceTxError Tx }
 
 newtype Value = Value (Bag Asset)
-    deriving (Eq, Ord) via AsShown (CountList (Bag Asset))
+    deriving (Eq, Ord) via AsShow (CountList (Bag Asset))
     deriving IsList via CountList (Bag Asset)
     deriving Show via Prefix "Value" (AsList Value)
     deriving newtype
@@ -107,7 +107,7 @@ newtype Value = Value (Bag Asset)
         )
 
 newtype Wallet = Wallet (Bag Value)
-    deriving (Eq, Ord) via AsShown (CountList (Bag Value))
+    deriving (Eq, Ord) via AsShow (CountList (Bag Value))
     deriving IsList via UnaryList (Bag Value)
     deriving Show via Prefix "Wallet" (AsList Wallet)
     deriving newtype
