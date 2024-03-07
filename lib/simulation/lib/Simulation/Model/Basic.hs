@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE ExplicitNamespaces #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures #-}
@@ -11,6 +12,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Use newtype instead of data" #-}
+{-# HLINT ignore "Avoid restricted alias" #-}
 
 module Simulation.Model.Basic where
 
@@ -21,7 +23,7 @@ import Prelude hiding
 import Data.Bag
     ( Bag
     , MultiplicityList (MultiplicityList)
-    , UnaryList (UnaryList)
+    , UnaryList (UnaryList), type (:×:) ((:×:))
     )
 import Data.Foldable
     ( Foldable (fold)
@@ -61,6 +63,8 @@ import GHC.IsList
 import Numeric.Natural
     ( Natural
     )
+import Data.String (IsString (fromString))
+import qualified Data.Text as Text
 
 --------------------------------------------------------------------------------
 -- Types
@@ -68,6 +72,9 @@ import Numeric.Natural
 
 data Asset = Lovelace | Asset Text
     deriving stock (Eq, Ord, Show)
+
+instance IsString Asset where
+    fromString = Asset . Text.pack
 
 newtype Fee = Fee Natural
     deriving stock (Eq, Ord, Show)
@@ -146,7 +153,7 @@ applyTxToWallet tx wallet =
     receiveChange Tx {change} = (<> fromList change)
 
 feeToValue :: Fee -> Value
-feeToValue (Fee n) = [(Lovelace, n)]
+feeToValue (Fee n) = [n :×: Lovelace]
 
 txValueIn :: Tx -> Value
 txValueIn Tx {inputs} = fold inputs

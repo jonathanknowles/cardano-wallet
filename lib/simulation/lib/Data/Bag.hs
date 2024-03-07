@@ -3,6 +3,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Data.Bag where
 
@@ -50,11 +51,21 @@ newtype Bag a = Bag (MonoidMap a (Sum Natural))
     deriving newtype (LeftCancellative, RightCancellative, Cancellative)
     deriving newtype (OverlappingGCDMonoid, Monus)
 
+data n :×: a = n :×: a
+    deriving stock Eq
+
+instance (Show n, Show a) => Show (n :×: a) where
+    show (n :×: a) = show n <> " × " <> show a
+
+(×) :: Natural -> a -> Natural :×: a
+n × a = n :×: a
+
+-- MultipleList
 newtype MultiplicityList a = MultiplicityList a
 newtype UnaryList a = UnaryList a
 
 instance Ord a => IsList (MultiplicityList (Bag a)) where
-    type Item (MultiplicityList (Bag a)) = (a, Natural)
+    type Item (MultiplicityList (Bag a)) = Natural :×: a
     fromList = coerce fromMultiplicityList
     toList = coerce toMultiplicityList
 
@@ -71,11 +82,15 @@ instance Show a => Show (UnaryList (Bag a)) where
     show (UnaryList m) =
         "fromUnaryList " <> show (toUnaryList m)
 
-fromMultiplicityList :: Ord a => [(a, Natural)] -> Bag a
-fromMultiplicityList = Bag . MonoidMap.fromList . coerce
+fromMultiplicityList :: Ord a => [Natural :×: a] -> Bag a
+fromMultiplicityList = Bag . MonoidMap.fromList . fmap fromMultiple
+  where
+    fromMultiple (n :×: a) = (a, Sum n)
 
-toMultiplicityList :: Bag a -> [(a, Natural)]
-toMultiplicityList (Bag s) = coerce . MonoidMap.toList $ s
+toMultiplicityList :: Bag a -> [Natural :×: a]
+toMultiplicityList (Bag s) = fmap toMultiple . MonoidMap.toList $ s
+  where
+    toMultiple (a, Sum n) = (n :×: a)
 
 fromUnaryList :: Ord a => [a] -> Bag a
 fromUnaryList = Bag . MonoidMap.fromList . fmap (, Sum 1)
@@ -83,7 +98,7 @@ fromUnaryList = Bag . MonoidMap.fromList . fmap (, Sum 1)
 toUnaryList :: Bag a -> [a]
 toUnaryList s = f =<< toMultiplicityList s
   where
-    f :: (a, Natural) -> [a]
-    f (a, n)
+    f :: (Natural :×: a) -> [a]
+    f (n :×: a)
         | n == 0 = []
-        | otherwise = a : f (a, n - 1)
+        | otherwise = a : f ((n - 1) :×: a)

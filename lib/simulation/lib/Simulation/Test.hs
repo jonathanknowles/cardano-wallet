@@ -2,9 +2,13 @@
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE OverloadedLists #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Use newtype instead of data" #-}
 
 module Simulation.Test where
 
+import Data.Bag
+    ( (×) )
 import Data.Either
     ( Either
     )
@@ -12,7 +16,7 @@ import Simulation.Implementation
     ( txBalancer
     )
 import Simulation.Model.Basic
-    ( Asset (Asset, Lovelace)
+    ( Asset (Lovelace, Asset)
     , BalanceTxError
     , PartialTx (PartialTx, outputs)
     , Tx
@@ -29,25 +33,20 @@ testBalancedTx =
 testPartialTx :: PartialTx
 testPartialTx = PartialTx
     { outputs =
-      [ [ (Lovelace, 1_000_000) ]
-      , [ (Lovelace, 3_000_000) ]
+    [ [ 1_000_000 × Lovelace ]
+    , [ 3_000_000 × Lovelace ]
       ]
     }
 
 testWallet :: Wallet
 testWallet =
-    [ [ (Lovelace, 1_000_000) ]
-    , [ (Lovelace, 2_000_000) ]
-    , [ (Lovelace, 3_000_000) ]
-    , [ (Lovelace, 4_000_000) ]
-    , [ (Lovelace, 1_000_000), (Asset "A", 1) ]
-    , [ (Lovelace, 1_000_000), (Asset "B", 2) ]
-    , [ (Lovelace, 1_000_000), (Asset "C", 3) ]
-    , [ (Lovelace, 1_000_000), (Asset "D", 4) ]
-    , [ (Lovelace, 8_000_000)
-      , (Asset "A", 1_000_000_000)
-      , (Asset "B", 1_000_000_000)
-      , (Asset "C", 1_000_000_000)
-      , (Asset "D", 1_000_000_000)
-      ]
+    [ [ 1_000_000 × Lovelace ]
+    , [ 2_000_000 × Lovelace ]
+    , [ 3_000_000 × Lovelace ]
+    , [ 4_000_000 × Lovelace ]
+    , [ 1_000_000 × Lovelace, 1 × Asset "🍎" ]
+    , [ 1_000_000 × Lovelace, 2 × Asset "你好" ]
+    , [ 1_000_000 × Lovelace, 3 × Asset "C" ]
+    , [ 1_000_000 × Lovelace, 4 × Asset "D" ]
+    , [ 8_000_000 × Lovelace, 1 × Asset "X", 1 × Asset "Y", 1 × Asset "Z" ]
     ]

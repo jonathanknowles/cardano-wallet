@@ -11,6 +11,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Avoid restricted alias" #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Simulation.Implementation.Internal where
 
@@ -220,6 +221,7 @@ import Test.QuickCheck.Extra
     , GenSize (GenSize)
     , arbitrarySample
     )
+import Data.Bag ((×), (:×:) ((:×:)))
 
 --------------------------------------------------------------------------------
 -- Type synonyms
@@ -451,12 +453,12 @@ toLedgerValue v =
         sum (mapMaybe getLovelaceQuantity (toList v))
 
     getAssetQuantity = \case
-        (Lovelace, _) -> Nothing
-        (Asset i, q) -> Just (i, fromIntegral q)
+        (_ :×: Lovelace) -> Nothing
+        (q :×: Asset i) -> Just (i, fromIntegral q)
 
     getLovelaceQuantity = \case
-        (Lovelace, q) -> Just (fromIntegral q)
-        (Asset _, _) -> Nothing
+        (q :×: Lovelace) -> Just (fromIntegral q)
+        (_ :×: Asset _) -> Nothing
 
     transform
         :: (Text, Integer)
@@ -469,16 +471,16 @@ fromLedgerValue :: LedgerValue -> Value
 fromLedgerValue
     (Ledger.Mary.MaryValue (Ledger.Coin i) m) =
         fromList
-            $ (Lovelace, fromIntegral i)
+            $ (fromIntegral i × Lovelace)
             : (transform <$> Ledger.Mary.flattenMultiAsset m)
   where
     transform
         :: (LedgerPolicyId, LedgerAssetName, Integer)
-        -> (Asset, Natural)
+        -> (Natural :×: Asset)
     transform (ledgerPolicyId, ledgerAssetName, v) =
-        ( Asset $ fromLedgerAssetId (ledgerPolicyId, ledgerAssetName)
-        , fromIntegral v
-        )
+        fromIntegral v
+        ×
+        Asset (fromLedgerAssetId (ledgerPolicyId, ledgerAssetName))
 
 --------------------------------------------------------------------------------
 -- Constants
