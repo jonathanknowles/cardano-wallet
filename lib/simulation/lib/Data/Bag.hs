@@ -37,13 +37,15 @@ import Data.Semigroup.Cancellative
     , RightCancellative
     , RightReductive
     )
+import Data.Set
+    ( Set
+    )
 import GHC.IsList
     ( IsList (Item, fromList, toList)
     )
 import Numeric.Natural
     ( Natural
     )
-import Data.Set (Set)
 
 newtype Bag a = Bag (MonoidMap a (Sum Natural))
     deriving stock Eq

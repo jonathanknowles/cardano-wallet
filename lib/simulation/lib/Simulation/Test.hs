@@ -24,18 +24,20 @@ import Simulation.Model.Basic
     , TxBalancer (TxBalancer, balanceTx)
     , Wallet
     )
+import System.Random.StdGenSeed
+    ( StdGenSeed (..)
+    )
 
 testBalancedTx :: Either BalanceTxError Tx
 testBalancedTx =
     balanceTx testWallet testPartialTx
   where
-    TxBalancer {balanceTx} = txBalancer
+    TxBalancer {balanceTx} = txBalancer (StdGenSeed 0)
 
 testPartialTx :: PartialTx
 testPartialTx = PartialTx
     { outputs =
-      [ [ 3_000_000 × Lovelace ]
-      , [ 5_000_000 × Lovelace ]
+      [ [ 1_000_000 × Lovelace ]
       ]
     }
 

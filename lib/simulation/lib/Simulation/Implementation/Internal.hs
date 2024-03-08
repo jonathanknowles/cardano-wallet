@@ -167,8 +167,8 @@ import qualified Cardano.Slotting.Time as Slotting
 
 import Prelude
 
-import Control.Monad.Random.NonRandom
-    ( NonRandom (runNonRandom)
+import Control.Monad.Random
+    ( evalRand
     )
 import Control.Monad.Trans.Except
     ( runExceptT
@@ -221,6 +221,10 @@ import GHC.IsList
     ( IsList (fromList, toList)
     )
 import GHC.Natural
+import System.Random.StdGenSeed
+    ( StdGenSeed (..)
+    , stdGenFromSeed
+    )
 import Test.QuickCheck.Extra
     ( GenCount (GenCount)
     , GenSize (GenSize)
@@ -557,15 +561,15 @@ testTimeTranslation =
 -- Transaction balancing
 --------------------------------------------------------------------------------
 
-txBalancer :: TxBalancer
-txBalancer = indexedTxBalancerToTxBalancer indexedTxBalancer
+txBalancer :: StdGenSeed -> TxBalancer
+txBalancer seed = indexedTxBalancerToTxBalancer (indexedTxBalancer seed)
 
-indexedTxBalancer :: IndexedTxBalancer
-indexedTxBalancer = IndexedTxBalancer {balanceIndexedTx}
+indexedTxBalancer :: StdGenSeed -> IndexedTxBalancer
+indexedTxBalancer seed = IndexedTxBalancer {balanceIndexedTx}
   where
     balanceIndexedTx utxo tx =
         bimap (BalanceTxError . show) (fromLedgerTx . fst) $
-        runNonRandom $
+        (`evalRand` stdGenFromSeed seed) $
         runExceptT $
         Write.balanceTransaction
             testLedgerProtocolParametersBabbage

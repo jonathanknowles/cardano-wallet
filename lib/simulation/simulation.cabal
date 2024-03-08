@@ -60,10 +60,12 @@ library
     , cardano-wallet-read
     , cardano-wallet-test-utils
     , containers
+    , MonadRandom
     , monoidmap
     , monoid-subclasses
     , pretty-simple
     , QuickCheck
+    , std-gen-seed
     , text
     , time
     , transformers
