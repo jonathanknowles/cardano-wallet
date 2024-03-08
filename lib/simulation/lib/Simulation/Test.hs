@@ -7,11 +7,10 @@
 
 module Simulation.Test where
 
+import Prelude
+
 import Data.Bag
     ( (×)
-    )
-import Data.Either
-    ( Either
     )
 import Simulation.Implementation
     ( txBalancer
@@ -27,29 +26,29 @@ import Simulation.Model.Basic
 import System.Random.StdGenSeed
     ( StdGenSeed (..)
     )
+import GHC.IsList (IsList(fromList))
 
 testBalancedTx :: Either BalanceTxError Tx
 testBalancedTx =
-    balanceTx testWallet testPartialTx
+    balanceTx testWalletAscendingUniform testPartialTx
   where
     TxBalancer {balanceTx} = txBalancer (StdGenSeed 0)
 
 testPartialTx :: PartialTx
 testPartialTx = PartialTx
     { outputs =
-      [ [ 1_000_000 × Lovelace ]
+      [ [ 1000_000_000 × Lovelace ]
       ]
     }
 
-testWallet :: Wallet
-testWallet =
-    [ [ 1_000_000 × Lovelace ]
-    , [ 2_000_000 × Lovelace ]
-    , [ 3_000_000 × Lovelace ]
-    , [ 4_000_000 × Lovelace ]
-    , [ 1_000_000 × Lovelace, 1 × Asset "🍎" ]
-    , [ 1_000_000 × Lovelace, 2 × Asset "🍌" ]
-    , [ 1_000_000 × Lovelace, 3 × Asset "🥥" ]
-    , [ 1_000_000 × Lovelace, 4 × Asset "🫐" ]
-    , [ 8_000_000 × Lovelace, 1 × Asset "X", 1 × Asset "Y", 1 × Asset "Z" ]
+testWalletFruit :: Wallet
+testWalletFruit =
+    [ [ 1_000_000 × Lovelace, 1 × Asset "🍎" ]
+    , [ 1_000_000 × Lovelace, 1 × Asset "🍌" ]
+    , [ 1_000_000 × Lovelace, 1 × Asset "🥥" ]
+    , [ 1_000_000 × Lovelace, 1 × Asset "🫐" ]
     ]
+
+testWalletAscendingUniform :: Wallet
+testWalletAscendingUniform = fromList $
+    (\v -> [(v * 1_000_000) × Lovelace]) <$> [1 .. 1000]
