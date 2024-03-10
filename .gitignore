@@ -15,6 +15,10 @@
 *.hp
 *.eventlog
 
+##
+build-all-with-errors.sh
+build-all-with-warnings.sh
+
 ### Cabal ###
 dist
 dist-*
