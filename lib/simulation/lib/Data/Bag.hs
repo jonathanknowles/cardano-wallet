@@ -84,6 +84,12 @@ instance Show a => Show (UnaryList (Bag a)) where
     show (UnaryList m) =
         "fromUnaryList " <> show (toUnaryList m)
 
+insert :: Ord a => a -> Bag a -> Bag a
+insert a (Bag m) = Bag $ MonoidMap.adjust (+ 1) a m
+
+count :: Ord a => a -> Bag a -> Natural
+count a (Bag m) = coerce $ MonoidMap.get a m
+
 fromCountList :: Ord a => [Natural :×: a] -> Bag a
 fromCountList = Bag . MonoidMap.fromList . fmap fromMultiple
   where

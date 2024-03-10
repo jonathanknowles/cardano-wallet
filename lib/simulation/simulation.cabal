@@ -74,6 +74,7 @@ library
     , unicode-show
   exposed-modules:
       Data.Bag
+      Data.LogDistribution
       Deriving
       Simulation
       Simulation.Model.Basic
