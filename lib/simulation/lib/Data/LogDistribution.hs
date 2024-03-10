@@ -42,10 +42,30 @@ newtype LogInterval = LogInterval Natural
 logInterval :: Natural -> LogInterval
 logInterval n = LogInterval . fromIntegral $ length (show n) - 1
 
+-- 0-9     or 1-9?
+-- 10–99
+-- 100–999
+-- 1000–9999
+-- 10000–99999
+-- 100000–999999
+-- 1000000–9999999
+-- 10000000–99999999
+-- 100000000–999999999
+-- 1000000000–9999999999
+-- 10000000000–99999999999
+-- 100000000000–999999999999
+-- 1000000000000–9999999999999
+
+-- 10^0 <= x < 10^1
+-- 10^1 <= x < 10^2
+-- 10^2 <= x < 10^3
+--
+-- 10^1 -- (10^2 - 1)
+-- 10^2 -- (10^3 - 1)
+-- 10^3 -- (10^4 - 1)
+
 instance Show LogInterval where
-    show (LogInterval n)
-        | n == 0 = "0–9"
-        | otherwise = lo <> "–" <> hi
+    show (LogInterval n) = lo <> "–" <> hi
       where
         lo :: String
         lo = "1" <> stimes n "0"
