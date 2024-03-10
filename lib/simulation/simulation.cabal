@@ -59,10 +59,12 @@ library
     , cardano-wallet-primitive
     , cardano-wallet-read
     , cardano-wallet-test-utils
+    , chart-svg
     , containers
     , MonadRandom
     , monoidmap
     , monoid-subclasses
+    , optics-core
     , pretty-simple
     , QuickCheck
     , std-gen-seed
