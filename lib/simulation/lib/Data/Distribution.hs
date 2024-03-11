@@ -6,6 +6,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Data.Distribution where
 
@@ -35,6 +36,7 @@ import Prelude hiding
 newtype Distribution a = Distribution (Bag a)
     deriving stock Eq
     deriving Show via Prefix "Distribution" (AsList (Distribution a))
+    deriving newtype (Semigroup, Monoid)
 
 instance (Ord a, Successor a) => IsList (Distribution a) where
     type Item (Distribution a) = Natural :×: a
@@ -80,6 +82,9 @@ bounds d = do
     lo <- minimum d
     hi <- maximum d
     pure (lo, hi)
+
+insert :: Ord a => a -> Distribution a -> Distribution a
+insert a (Distribution d) = Distribution (Bag.insert a d)
 
 minimum :: Distribution a -> Maybe a
 minimum (Distribution d) = Set.lookupMin (Bag.support d)

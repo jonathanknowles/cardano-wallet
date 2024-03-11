@@ -67,6 +67,8 @@ library
     , optics-core
     , pretty-simple
     , QuickCheck
+    , random
+    , random-shuffle
     , std-gen-seed
     , text
     , time
