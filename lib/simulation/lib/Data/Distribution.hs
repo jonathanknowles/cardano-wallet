@@ -57,13 +57,27 @@ fromList :: Ord a => [Natural :×: a] -> Distribution a
 fromList = Distribution . Bag.fromCountList
 
 toList :: (Ord a, Successor a) => Distribution a -> [Natural :×: a]
-toList d = (`lookup` d) <$> range d
+toList d = maybe [] (\(lo, hi) -> toListWithBounds lo hi d) (bounds d)
+
+toListWithBounds
+    :: (Ord a, Successor a)
+    => a
+    -> a
+    -> Distribution a
+    -> [Natural :×: a]
+toListWithBounds lowerBound upperBound b = (`count` b) <$> r
+  where
+    r = loop lowerBound
+      where
+        loop !x
+            | x >= upperBound = [x]
+            | otherwise = x : loop (successor x)
 
 empty :: Ord a => Distribution a
 empty = Distribution mempty
 
-limits :: Distribution a -> Maybe (a, a)
-limits d = do
+bounds :: Distribution a -> Maybe (a, a)
+bounds d = do
     lo <- minimum d
     hi <- maximum d
     pure (lo, hi)
@@ -74,15 +88,5 @@ minimum (Distribution d) = Set.lookupMin (Bag.support d)
 maximum :: Distribution a -> Maybe a
 maximum (Distribution d) = Set.lookupMax (Bag.support d)
 
-range :: forall a. (Eq a, Successor a) => Distribution a -> [a]
-range d = maybe [] enumerateRange (limits d)
-  where
-    enumerateRange :: (a, a) -> [a]
-    enumerateRange (lowerBound, upperBound) = loop lowerBound
-      where
-        loop !x
-            | x == upperBound = [x]
-            | otherwise = x : loop (successor x)
-
-lookup :: Ord a => a -> Distribution a -> Natural :×: a
-lookup i (Distribution d) = Bag.count i d
+count :: Ord a => a -> Distribution a -> Natural :×: a
+count i (Distribution d) = Bag.count i d
