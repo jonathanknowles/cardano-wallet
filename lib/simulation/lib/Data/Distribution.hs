@@ -65,13 +65,12 @@ toListWithBounds
     -> a
     -> Distribution a
     -> [Natural :×: a]
-toListWithBounds lowerBound upperBound b = (`count` b) <$> r
+toListWithBounds lo hi d =
+    (`count` d) <$> from lo
   where
-    r = loop lowerBound
-      where
-        loop !x
-            | x >= upperBound = [x]
-            | otherwise = x : loop (successor x)
+    from !x
+        | x > hi = []
+        | otherwise = x : from (successor x)
 
 empty :: Ord a => Distribution a
 empty = Distribution mempty
