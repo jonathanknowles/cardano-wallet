@@ -4,7 +4,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
-module Data.LogDistribution where
+module Data.Distribution.Log where
 
 import Data.Bag
     ( Bag
@@ -56,9 +56,15 @@ logInterval n = LogInterval . fromIntegral $ length (show n) - 1
 -- 100000000000–999999999999
 -- 1000000000000–9999999999999
 
--- 10^0 <= x < 10^1
+--    0 <= x < 10^1
 -- 10^1 <= x < 10^2
 -- 10^2 <= x < 10^3
+-- 10^3 <= x < 10^4
+-- 10^4 <= x < 10^5
+-- 10^5 <= x < 10^6
+-- 10^6 <= x < 10^7
+-- 10^7 <= x < 10^8
+-- 10^8 <= x < 10^9
 --
 -- 10^1 -- (10^2 - 1)
 -- 10^2 -- (10^3 - 1)
@@ -86,7 +92,7 @@ toList d =
 insert :: Natural -> LogDistribution -> LogDistribution
 insert n (LogDistribution d) = LogDistribution $ Bag.insert (logInterval n) d
 
-lookup :: LogInterval -> LogDistribution -> (Natural :×: LogInterval)
+lookup :: LogInterval -> LogDistribution -> Natural :×: LogInterval
 lookup interval (LogDistribution d) = Bag.count interval d :×: interval
 
 maximum :: LogDistribution -> Maybe LogInterval
