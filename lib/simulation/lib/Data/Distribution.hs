@@ -1,55 +1,88 @@
-{-# LANGUAGE DerivingVia #-}
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE UndecidableInstances #-}
+
 module Data.Distribution where
-import Data.Bag (Bag, CountList, (:×:) ((:×:)))
-import Prelude
-import Deriving (Prefix(Prefix), AsList(AsList))
-import GHC.IsList (IsList)
+
+import Data.Bag
+    ( Bag
+    , (:×:)
+    )
 import qualified Data.Bag as Bag
 import qualified Data.Set as Set
-import Numeric.Natural (Natural)
+import Deriving
+    ( AsList (AsList)
+    , Prefix (Prefix)
+    )
+import GHC.IsList
+    ( IsList (Item)
+    )
+import qualified GHC.IsList as IsList
+import Numeric.Natural
+    ( Natural
+    )
+import Prelude hiding
+    ( lookup
+    , maximum
+    , minimum
+    )
 
-newtype Distribution a = Distribution (Bag (Interval a))
+newtype Distribution a = Distribution (Bag a)
+    deriving stock Eq
+    deriving Show via Prefix "Distribution" (AsList (Distribution a))
 
-class HasInterval a where
-    type Interval a
-    toInterval :: a -> Interval a
-
-class Least a where
-    least :: a
+instance (Ord a, Successor a) => IsList (Distribution a) where
+    type Item (Distribution a) = Natural :×: a
+    fromList = fromList
+    toList = toList
 
 class Successor a where
     successor :: a -> a
 
-fromList :: HasInterval a => Ord (Interval a) => [a] -> Distribution a
-fromList as = Distribution $ Bag.fromUnaryList $ toInterval <$> as
+instance Successor Integer where
+    successor = succ
 
-toDenseList
-    :: Eq (Interval a)
-    => Least (Interval a)
-    => Successor (Interval a)
-    => Distribution a
-    -> [Natural :×: Interval a]
-toDenseList d = undefined
-  where
-    intervals = undefined
+instance Successor Natural where
+    successor = succ
 
-empty :: Ord (Interval a) => Distribution a
+fromUnaryList :: Ord a => [a] -> Distribution a
+fromUnaryList as = Distribution $ Bag.fromUnaryList as
+
+fromList :: Ord a => [Natural :×: a] -> Distribution a
+fromList = Distribution . Bag.fromCountList
+
+toList :: (Ord a, Successor a) => Distribution a -> [Natural :×: a]
+toList d = (`lookup` d) <$> range d
+
+empty :: Ord a => Distribution a
 empty = Distribution mempty
 
-min :: Distribution a -> Maybe (Interval a)
-min (Distribution d) = Set.lookupMin (Bag.support d)
+limits :: Distribution a -> Maybe (a, a)
+limits d = do
+    lo <- minimum d
+    hi <- maximum d
+    pure (lo, hi)
 
-max :: Distribution a -> Maybe (Interval a)
-max (Distribution d) = Set.lookupMax (Bag.support d)
+minimum :: Distribution a -> Maybe a
+minimum (Distribution d) = Set.lookupMin (Bag.support d)
 
-lookup
-    :: Ord (Interval a)
-    => Interval a
-    -> Distribution a
-    -> Natural :×: Interval a
-lookup i (Distribution d) = Bag.count i d :×: i
+maximum :: Distribution a -> Maybe a
+maximum (Distribution d) = Set.lookupMax (Bag.support d)
+
+range :: forall a. (Eq a, Successor a) => Distribution a -> [a]
+range d = maybe [] enumerateRange (limits d)
+  where
+    enumerateRange :: (a, a) -> [a]
+    enumerateRange (lowerBound, upperBound) = loop lowerBound
+      where
+        loop !x
+            | x == upperBound = [x]
+            | otherwise = x : loop (successor x)
+
+lookup :: Ord a => a -> Distribution a -> Natural :×: a
+lookup i (Distribution d) = Bag.count i d

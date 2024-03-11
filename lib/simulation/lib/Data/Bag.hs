@@ -40,6 +40,7 @@ import Data.Semigroup.Cancellative
 import Data.Set
     ( Set
     )
+import qualified Data.Set as Set
 import GHC.IsList
     ( IsList (Item, fromList, toList)
     )
@@ -87,8 +88,8 @@ instance Show a => Show (UnaryList (Bag a)) where
 insert :: Ord a => a -> Bag a -> Bag a
 insert a (Bag m) = Bag $ MonoidMap.adjust (+ 1) a m
 
-count :: Ord a => a -> Bag a -> Natural
-count a (Bag m) = coerce $ MonoidMap.get a m
+count :: Ord a => a -> Bag a -> Natural :×: a
+count a (Bag m) = coerce (MonoidMap.get a m) :×: a
 
 fromCountList :: Ord a => [Natural :×: a] -> Bag a
 fromCountList = Bag . MonoidMap.fromList . fmap fromMultiple
@@ -113,3 +114,9 @@ toUnaryList s = f =<< toCountList s
 
 support :: Bag a -> Set a
 support (Bag m) = MonoidMap.nonNullKeys m
+
+minimum :: Bag a -> Maybe a
+minimum = Set.lookupMin . support
+
+maximum :: Bag a -> Maybe a
+maximum = Set.lookupMax . support

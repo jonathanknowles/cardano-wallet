@@ -93,7 +93,7 @@ insert :: Natural -> LogDistribution -> LogDistribution
 insert n (LogDistribution d) = LogDistribution $ Bag.insert (logInterval n) d
 
 lookup :: LogInterval -> LogDistribution -> Natural :×: LogInterval
-lookup interval (LogDistribution d) = Bag.count interval d :×: interval
+lookup interval (LogDistribution d) = Bag.count interval d
 
 maximum :: LogDistribution -> Maybe LogInterval
 maximum (LogDistribution d) =
