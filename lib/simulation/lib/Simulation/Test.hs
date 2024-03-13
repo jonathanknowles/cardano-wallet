@@ -39,9 +39,6 @@ import Simulation.Model.Basic
     , Wallet
     , applyTxToWallet
     )
-import System.Random.StdGenSeed
-    ( StdGenSeed (..)
-    )
 import Test.QuickCheck
     ( frequency
     )
@@ -76,7 +73,7 @@ performAction action wallet =
                 Left (BalanceTxError e) -> error e
                 Right tx -> pure (applyTxToWallet tx wallet)
   where
-    TxBalancer {balanceTx} = txBalancer (StdGenSeed 0)
+    TxBalancer {balanceTx} = txBalancer
 
 performActions
     :: forall m. MonadRandom m
@@ -95,7 +92,7 @@ testBalancedTx :: MonadRandom m => m (Either BalanceTxError Tx)
 testBalancedTx =
     balanceTx testWalletAscendingUniform testPartialTx
   where
-    TxBalancer {balanceTx} = txBalancer (StdGenSeed 0)
+    TxBalancer {balanceTx} = txBalancer
 
 testPartialTx :: PartialTx
 testPartialTx = PartialTx

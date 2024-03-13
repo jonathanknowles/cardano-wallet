@@ -30,7 +30,7 @@ import qualified Internal.Cardano.Write.Tx as Write
     )
 import qualified Internal.Cardano.Write.Tx.Balance as Write
     ( ChangeAddressGen (..)
-    , PartialTx (PartialTx, inputs, redeemers, timelockKeyWitnessCounts, tx)
+    , PartialTx (PartialTx)
     , UTxOIndex
     , balanceTransaction
     , constructUTxOIndex
@@ -167,9 +167,6 @@ import qualified Cardano.Slotting.Time as Slotting
 
 import Prelude
 
-import Control.Monad.Random
-    ( evalRand
-    )
 import Control.Monad.Random.Class
     ( MonadRandom
     )
@@ -225,10 +222,6 @@ import GHC.IsList
     )
 import GHC.Natural
 import qualified Internal.Cardano.Write.Tx.Balance
-import System.Random.StdGenSeed
-    ( StdGenSeed (..)
-    , stdGenFromSeed
-    )
 import Test.QuickCheck.Extra
     ( GenCount (GenCount)
     , GenSize (GenSize)
@@ -565,14 +558,11 @@ testTimeTranslation =
 -- Transaction balancing
 --------------------------------------------------------------------------------
 
-txBalancer :: MonadRandom m => StdGenSeed -> TxBalancer m
-txBalancer seed = indexedTxBalancerToTxBalancer (indexedTxBalancer seed)
+txBalancer :: MonadRandom m => TxBalancer m
+txBalancer = indexedTxBalancerToTxBalancer indexedTxBalancer
 
-indexedTxBalancer
-    :: forall m. MonadRandom m
-    => StdGenSeed
-    -> IndexedTxBalancer m
-indexedTxBalancer _seed = IndexedTxBalancer {balanceIndexedTx}
+indexedTxBalancer :: forall m. MonadRandom m => IndexedTxBalancer m
+indexedTxBalancer = IndexedTxBalancer {balanceIndexedTx}
   where
     balanceIndexedTx :: UTxO -> IndexedTx -> m (Either BalanceTxError IndexedTx)
     balanceIndexedTx utxo tx =
