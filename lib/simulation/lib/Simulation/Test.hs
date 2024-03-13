@@ -49,18 +49,18 @@ import Test.QuickCheck.Gen
 genAction :: Gen Action
 genAction =
     frequency
-        [ (1, Deposit <$> genDepositValue)
-        , (5, Payment <$> genPaymentValue)
+        [ (8, Deposit <$> genDepositValue)
+        , (7, Payment <$> genPaymentValue)
         ]
 
 genDepositValue :: Gen Value
 genDepositValue = pure [ 50_000_000 × Lovelace ]
 
 genPaymentValue :: Gen Value
-genPaymentValue = pure [ 10_000_000 × Lovelace ]
+genPaymentValue = pure [ 50_000_000 × Lovelace ]
 
 genActions :: Gen [Action]
-genActions = replicateM 1000 genAction
+genActions = replicateM 2000 genAction
 
 performAction :: MonadRandom m => Action -> Wallet -> m (Maybe Wallet)
 performAction action wallet =
@@ -112,3 +112,9 @@ testWalletFruit =
 testWalletAscendingUniform :: Wallet
 testWalletAscendingUniform = fromList $
     (\v -> [(v * 1_000_000) × Lovelace]) <$> ([1 .. 100])
+
+testWalletBimodal :: Wallet
+testWalletBimodal = fromList $
+    replicate 1_000 [1_000_000 × Lovelace]
+    <>
+    replicate 1 [1_000_000_000 × Lovelace]
