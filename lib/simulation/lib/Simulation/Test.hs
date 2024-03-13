@@ -16,6 +16,9 @@ import Control.Monad
     ( foldM
     , replicateM
     )
+import Control.Monad.Random.Class
+    ( MonadRandom
+    )
 import Data.Bag
     ( (×)
     )
@@ -62,23 +65,33 @@ genPaymentValue = pure [ 10_000_000 × Lovelace ]
 genActions :: Gen [Action]
 genActions = replicateM 1000 genAction
 
-performAction :: Action -> Wallet -> Maybe Wallet
+performAction :: MonadRandom m => Action -> Wallet -> m (Maybe Wallet)
 performAction action wallet =
     case action of
-        Deposit v -> Just (wallet <> [v])
+        Deposit v -> pure $ Just (wallet <> [v])
         Payment v -> do
             let partialTx = PartialTx {outputs = [v]}
             maybeBalancedTx <- balanceTx wallet partialTx
             case maybeBalancedTx of
                 Left (BalanceTxError e) -> error e
-                Right tx -> applyTxToWallet tx wallet
+                Right tx -> pure (applyTxToWallet tx wallet)
   where
     TxBalancer {balanceTx} = txBalancer (StdGenSeed 0)
 
-performActions :: [Action] -> Wallet -> Maybe Wallet
-performActions actions wallet = foldM (flip performAction) wallet actions
+performActions
+    :: forall m. MonadRandom m
+    => [Action]
+    -> Wallet
+    -> m (Maybe Wallet)
+performActions actions wallet = foldM f (Just wallet) actions
+  where
+    f :: Maybe Wallet -> Action -> m (Maybe Wallet)
+    f maybeWallet action =
+        case maybeWallet of
+            Nothing -> pure Nothing
+            Just w -> performAction action w
 
-testBalancedTx :: Applicative m => m (Either BalanceTxError Tx)
+testBalancedTx :: MonadRandom m => m (Either BalanceTxError Tx)
 testBalancedTx =
     balanceTx testWalletAscendingUniform testPartialTx
   where

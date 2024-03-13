@@ -170,6 +170,9 @@ import Prelude
 import Control.Monad.Random
     ( evalRand
     )
+import Control.Monad.Random.Class
+    ( MonadRandom
+    )
 import Control.Monad.Trans.Except
     ( runExceptT
     )
@@ -561,11 +564,11 @@ testTimeTranslation =
 -- Transaction balancing
 --------------------------------------------------------------------------------
 
-txBalancer :: Applicative m => StdGenSeed -> TxBalancer m
+txBalancer :: MonadRandom m => StdGenSeed -> TxBalancer m
 txBalancer seed = indexedTxBalancerToTxBalancer (indexedTxBalancer seed)
 
 indexedTxBalancer
-    :: forall m. Applicative m
+    :: forall m. MonadRandom m
     => StdGenSeed
     -> IndexedTxBalancer m
 indexedTxBalancer seed = IndexedTxBalancer {balanceIndexedTx}
