@@ -41,7 +41,6 @@ import System.Random.StdGenSeed
     )
 import Test.QuickCheck
     ( frequency
-    , listOf
     )
 import Test.QuickCheck.Gen
     ( Gen
