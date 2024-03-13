@@ -12,6 +12,12 @@ import Prelude
 import Data.Coerce
     ( coerce
     )
+import Data.List
+    ( intercalate
+    )
+import Data.List.Split
+    ( chunksOf
+    )
 import Data.Monoid
     ( Sum (Sum)
     )
@@ -47,9 +53,6 @@ import GHC.IsList
 import Numeric.Natural
     ( Natural
     )
-import Data.List.Split
-    ( chunksOf )
-import Data.List (intercalate)
 
 newtype Bag a = Bag (MonoidMap a (Sum Natural))
     deriving stock Eq

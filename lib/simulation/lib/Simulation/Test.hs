@@ -12,6 +12,10 @@ module Simulation.Test where
 
 import Prelude
 
+import Control.Monad
+    ( foldM
+    , replicateM
+    )
 import Data.Bag
     ( (×)
     )
@@ -22,19 +26,26 @@ import Simulation.Implementation
     ( txBalancer
     )
 import Simulation.Model.Basic
-    ( Asset (Asset, Lovelace)
+    ( Action (Deposit, Payment)
+    , Asset (Asset, Lovelace)
     , BalanceTxError (BalanceTxError)
     , PartialTx (PartialTx, outputs)
     , Tx
     , TxBalancer (TxBalancer, balanceTx)
-    , Wallet, Action (Deposit, Payment), Value, applyTxToWallet
+    , Value
+    , Wallet
+    , applyTxToWallet
     )
 import System.Random.StdGenSeed
     ( StdGenSeed (..)
     )
-import Test.QuickCheck.Gen (Gen)
-import Test.QuickCheck (frequency, listOf)
-import Control.Monad (replicateM, foldM)
+import Test.QuickCheck
+    ( frequency
+    , listOf
+    )
+import Test.QuickCheck.Gen
+    ( Gen
+    )
 
 genAction :: Gen Action
 genAction =
