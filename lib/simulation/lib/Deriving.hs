@@ -29,6 +29,22 @@ newtype AsList a = AsList a
 
 instance
     ( IsList a
+    , Eq (IsList.Item a)
+    ) =>
+    Eq (AsList a)
+  where
+    AsList a1 == AsList a2 = toList a1 == toList a2
+
+instance
+    ( IsList a
+    , Ord (IsList.Item a)
+    ) =>
+    Ord (AsList a)
+  where
+    AsList a1 <= AsList a2 = toList a1 <= toList a2
+
+instance
+    ( IsList a
     , Show (IsList.Item a)
     ) =>
     Show (AsList a)

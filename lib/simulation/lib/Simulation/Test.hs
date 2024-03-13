@@ -56,4 +56,4 @@ testWalletFruit =
 
 testWalletAscendingUniform :: Wallet
 testWalletAscendingUniform = fromList $
-    (\v -> [(v * 1_000_000) × Lovelace]) <$> [1 .. 1000]
+    (\v -> [(v * 1_000_000) × Lovelace]) <$> ([1 .. 100])

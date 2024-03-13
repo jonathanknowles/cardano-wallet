@@ -69,6 +69,7 @@ library
     , QuickCheck
     , random
     , random-shuffle
+    , split
     , std-gen-seed
     , text
     , time

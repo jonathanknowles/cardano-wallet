@@ -47,6 +47,9 @@ import GHC.IsList
 import Numeric.Natural
     ( Natural
     )
+import Data.List.Split
+    ( chunksOf )
+import Data.List (intercalate)
 
 newtype Bag a = Bag (MonoidMap a (Sum Natural))
     deriving stock Eq
@@ -56,10 +59,14 @@ newtype Bag a = Bag (MonoidMap a (Sum Natural))
     deriving newtype (OverlappingGCDMonoid, Monus)
 
 data n :×: a = !n :×: !a
-    deriving stock Eq
+    deriving stock (Eq, Ord)
 
-instance (Show n, Show a) => Show (n :×: a) where
-    show (n :×: a) = show n <> " × " <> show a
+instance Show a => Show (Natural :×: a) where
+    show (n :×: a) = showNatural n <> " × " <> show a
+      where
+        showNatural :: Natural -> String
+        showNatural =
+            reverse . intercalate "_" . chunksOf 3 . reverse . show
 
 (×) :: Natural -> a -> Natural :×: a
 n × a = n :×: a
