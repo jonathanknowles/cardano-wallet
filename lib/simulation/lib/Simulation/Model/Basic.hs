@@ -65,6 +65,10 @@ import GHC.IsList
 -- Types
 --------------------------------------------------------------------------------
 
+data Action
+    = Deposit Value
+    | Payment Value
+
 data Asset = Lovelace | Asset Text
     deriving stock (Eq, Ord, Show)
 

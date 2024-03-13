@@ -6,20 +6,19 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Use newtype instead of data" #-}
 {-# HLINT ignore "Avoid restricted alias" #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE ExplicitNamespaces #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Simulation.Test where
 
 import Prelude
 
-import Text.Printf
-    ( printf )
 import Chart
     ( Priority (Priority)
     , frames
-    , hudOptions, writeChartOptions
+    , hudOptions
+    , writeChartOptions
     )
 import Chart.Bar
     ( BarData (..)
@@ -33,12 +32,33 @@ import Chart.Hud
 import Chart.Markup
     ( ChartOptions
     )
+import Control.Monad
+    ( forM_
+    , replicateM
+    )
+import Control.Monad.Random.Class
+    ( MonadRandom (getRandomR)
+    )
 import Data.Bag
-    ( (×), type (:×:) ((:×:))
+    ( type (:×:) ((:×:))
+    , (×)
+    )
+import Data.Distribution
+    ( Distribution
+    )
+import qualified Data.Distribution as Distribution
+import Data.List
+    ( scanl'
+    )
+import Data.Text
+    ( Text
     )
 import qualified Data.Text as Text
 import GHC.IsList
     ( IsList (fromList)
+    )
+import Numeric.Natural
+    ( Natural
     )
 import Optics.Core
     ( set
@@ -56,19 +76,15 @@ import Simulation.Model.Basic
     , TxBalancer (TxBalancer, balanceTx)
     , Wallet
     )
+import System.Random.Shuffle
+    ( shuffleM
+    )
 import System.Random.StdGenSeed
     ( StdGenSeed (..)
     )
-import Control.Monad.Random.Class (MonadRandom (getRandomR))
-import Numeric.Natural (Natural)
-import Control.Monad (replicateM)
-import Data.Distribution (Distribution)
-import qualified Data.Distribution as Distribution
-import Data.List (scanl')
-import Data.Text (Text)
-import Control.Monad.Random (forM)
-import Control.Monad (forM_)
-import System.Random.Shuffle (shuffleM)
+import Text.Printf
+    ( printf
+    )
 
 testBalancedTx :: Either BalanceTxError Tx
 testBalancedTx =
@@ -116,9 +132,6 @@ randomValue = do
   where
     v = fromIntegral @Integer @Natural <$>
         getRandomR (0, 4)
-
---randomValues :: MonadRandom m => m [Natural]
---randomValues = replicateM 65536 randomValue
 
 randomValues :: forall m. MonadRandom m => m [Natural]
 randomValues = do
