@@ -224,6 +224,7 @@ import GHC.IsList
     ( IsList (fromList, toList)
     )
 import GHC.Natural
+import qualified Internal.Cardano.Write.Tx.Balance
 import System.Random.StdGenSeed
     ( StdGenSeed (..)
     , stdGenFromSeed
@@ -571,27 +572,21 @@ indexedTxBalancer
     :: forall m. MonadRandom m
     => StdGenSeed
     -> IndexedTxBalancer m
-indexedTxBalancer seed = IndexedTxBalancer {balanceIndexedTx}
+indexedTxBalancer _seed = IndexedTxBalancer {balanceIndexedTx}
   where
     balanceIndexedTx :: UTxO -> IndexedTx -> m (Either BalanceTxError IndexedTx)
     balanceIndexedTx utxo tx =
-        foo
+        fmap (bimap (BalanceTxError . show) (fromLedgerTx . fst)) $
+        runExceptT $
+        Write.balanceTransaction
+            testLedgerProtocolParametersBabbage
+            testTimeTranslation
+            testUTxOAssumptions
+            utxoIndex
+            changeAddressGen
+            changeAddresses
+            partialTx
       where
-        foo :: m (Either BalanceTxError IndexedTx)
-        foo =
-            pure $
-            bimap (BalanceTxError . show) (fromLedgerTx . fst) $
-            (`evalRand` stdGenFromSeed seed) $
-            runExceptT $
-            Write.balanceTransaction
-                testLedgerProtocolParametersBabbage
-                testTimeTranslation
-                testUTxOAssumptions
-                utxoIndex
-                changeAddressGen
-                changeAddresses
-                partialTx
-
         changeAddresses =
             AddressInternal :| repeat AddressInternal
 
