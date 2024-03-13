@@ -68,7 +68,8 @@ performAction action wallet =
         Deposit v -> Just (wallet <> [v])
         Payment v -> do
             let partialTx = PartialTx {outputs = [v]}
-            case balanceTx wallet partialTx of
+            maybeBalancedTx <- balanceTx wallet partialTx
+            case maybeBalancedTx of
                 Left (BalanceTxError e) -> error e
                 Right tx -> applyTxToWallet tx wallet
   where
@@ -77,7 +78,7 @@ performAction action wallet =
 performActions :: [Action] -> Wallet -> Maybe Wallet
 performActions actions wallet = foldM (flip performAction) wallet actions
 
-testBalancedTx :: Either BalanceTxError Tx
+testBalancedTx :: Applicative m => m (Either BalanceTxError Tx)
 testBalancedTx =
     balanceTx testWalletAscendingUniform testPartialTx
   where

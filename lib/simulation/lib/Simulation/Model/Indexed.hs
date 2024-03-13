@@ -52,8 +52,10 @@ data IndexedTx = IndexedTx
     }
     deriving stock (Eq, Show)
 
-newtype IndexedTxBalancer = IndexedTxBalancer
-    { balanceIndexedTx :: UTxO -> IndexedTx -> Either BalanceTxError IndexedTx }
+newtype IndexedTxBalancer m = IndexedTxBalancer
+    { balanceIndexedTx
+        :: UTxO -> IndexedTx -> m (Either BalanceTxError IndexedTx)
+    }
 
 newtype TxIn = TxIn Int
     deriving stock (Eq, Ord, Show)
@@ -70,13 +72,17 @@ newtype UTxO = UTxO (Map TxIn TxOut)
 -- Functions
 --------------------------------------------------------------------------------
 
-indexedTxBalancerToTxBalancer :: IndexedTxBalancer -> TxBalancer
+indexedTxBalancerToTxBalancer
+    :: forall m. Functor m
+    => IndexedTxBalancer m
+    -> TxBalancer m
 indexedTxBalancerToTxBalancer IndexedTxBalancer {balanceIndexedTx} =
     TxBalancer {balanceTx}
   where
-    balanceTx :: Wallet -> PartialTx -> Either BalanceTxError Tx
+    balanceTx :: Wallet -> PartialTx -> m (Either BalanceTxError Tx)
     balanceTx wallet (PartialTx ptxOutputs) =
-        indexedTxToTx <$> balanceIndexedTx (UTxO utxoMap) unbalancedIndexedTx
+        fmap indexedTxToTx
+            <$> balanceIndexedTx (UTxO utxoMap) unbalancedIndexedTx
       where
         unbalancedIndexedTx :: IndexedTx
         unbalancedIndexedTx = IndexedTx

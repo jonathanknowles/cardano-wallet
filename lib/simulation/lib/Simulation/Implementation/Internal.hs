@@ -561,25 +561,34 @@ testTimeTranslation =
 -- Transaction balancing
 --------------------------------------------------------------------------------
 
-txBalancer :: StdGenSeed -> TxBalancer
+txBalancer :: Applicative m => StdGenSeed -> TxBalancer m
 txBalancer seed = indexedTxBalancerToTxBalancer (indexedTxBalancer seed)
 
-indexedTxBalancer :: StdGenSeed -> IndexedTxBalancer
+indexedTxBalancer
+    :: forall m. Applicative m
+    => StdGenSeed
+    -> IndexedTxBalancer m
 indexedTxBalancer seed = IndexedTxBalancer {balanceIndexedTx}
   where
+    balanceIndexedTx :: UTxO -> IndexedTx -> m (Either BalanceTxError IndexedTx)
     balanceIndexedTx utxo tx =
-        bimap (BalanceTxError . show) (fromLedgerTx . fst) $
-        (`evalRand` stdGenFromSeed seed) $
-        runExceptT $
-        Write.balanceTransaction
-            testLedgerProtocolParametersBabbage
-            testTimeTranslation
-            testUTxOAssumptions
-            utxoIndex
-            changeAddressGen
-            changeAddresses
-            partialTx
+        foo
       where
+        foo :: m (Either BalanceTxError IndexedTx)
+        foo =
+            pure $
+            bimap (BalanceTxError . show) (fromLedgerTx . fst) $
+            (`evalRand` stdGenFromSeed seed) $
+            runExceptT $
+            Write.balanceTransaction
+                testLedgerProtocolParametersBabbage
+                testTimeTranslation
+                testUTxOAssumptions
+                utxoIndex
+                changeAddressGen
+                changeAddresses
+                partialTx
+
         changeAddresses =
             AddressInternal :| repeat AddressInternal
 

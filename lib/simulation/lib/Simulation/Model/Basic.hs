@@ -88,8 +88,8 @@ data Tx = Tx
     }
     deriving stock (Eq, Show)
 
-newtype TxBalancer = TxBalancer
-    { balanceTx :: Wallet -> PartialTx -> Either BalanceTxError Tx }
+newtype TxBalancer m = TxBalancer
+    { balanceTx :: Wallet -> PartialTx -> m (Either BalanceTxError Tx) }
 
 newtype Value = Value (Bag Asset)
     deriving Ord via AsList Value
