@@ -86,6 +86,7 @@ library
       Simulation.Implementation.Internal
       Simulation.Prelude
       Simulation.Test
+      Simulation.Test.Chart
 
 test-suite test
   import:             language, opts-exe
