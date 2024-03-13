@@ -23,15 +23,49 @@ import Simulation.Implementation
     )
 import Simulation.Model.Basic
     ( Asset (Asset, Lovelace)
-    , BalanceTxError
+    , BalanceTxError (BalanceTxError)
     , PartialTx (PartialTx, outputs)
     , Tx
     , TxBalancer (TxBalancer, balanceTx)
-    , Wallet
+    , Wallet, Action (Deposit, Payment), Value, applyTxToWallet
     )
 import System.Random.StdGenSeed
     ( StdGenSeed (..)
     )
+import Test.QuickCheck.Gen (Gen)
+import Test.QuickCheck (frequency, listOf)
+import Control.Monad (replicateM, foldM)
+
+genAction :: Gen Action
+genAction =
+    frequency
+        [ (1, Deposit <$> genDepositValue)
+        , (5, Payment <$> genPaymentValue)
+        ]
+
+genDepositValue :: Gen Value
+genDepositValue = pure [ 50_000_000 × Lovelace ]
+
+genPaymentValue :: Gen Value
+genPaymentValue = pure [ 10_000_000 × Lovelace ]
+
+genActions :: Gen [Action]
+genActions = replicateM 1000 genAction
+
+performAction :: Action -> Wallet -> Maybe Wallet
+performAction action wallet =
+    case action of
+        Deposit v -> Just (wallet <> [v])
+        Payment v -> do
+            let partialTx = PartialTx {outputs = [v]}
+            case balanceTx wallet partialTx of
+                Left (BalanceTxError e) -> error e
+                Right tx -> applyTxToWallet tx wallet
+  where
+    TxBalancer {balanceTx} = txBalancer (StdGenSeed 0)
+
+performActions :: [Action] -> Wallet -> Maybe Wallet
+performActions actions wallet = foldM (flip performAction) wallet actions
 
 testBalancedTx :: Either BalanceTxError Tx
 testBalancedTx =

@@ -67,6 +67,7 @@ import GHC.IsList
 data Action
     = Deposit Value
     | Payment Value
+    deriving stock (Eq, Show)
 
 data Asset = Lovelace | Asset Text
     deriving stock (Eq, Ord, Show)
