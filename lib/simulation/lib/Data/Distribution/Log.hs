@@ -29,6 +29,8 @@ import Prelude hiding
     ( lookup
     , maximum
     )
+import Data.List (intercalate)
+import Data.List.Split (chunksOf)
 
 newtype LogDistribution = LogDistribution (Bag LogInterval)
     deriving newtype Eq
@@ -65,6 +67,11 @@ logInterval n = LogInterval . fromIntegral $ length (show n) - 1
 -- 10^6 <= x < 10^7
 -- 10^7 <= x < 10^8
 -- 10^8 <= x < 10^9
+-- 10^9  <= x < 10^10
+-- 10^10 <= x < 10^11
+--
+-- [10^0 .. 10^1)
+--
 --
 -- 10^1 -- (10^2 - 1)
 -- 10^2 -- (10^3 - 1)
@@ -74,10 +81,13 @@ instance Show LogInterval where
     show (LogInterval n) = lo <> "–" <> hi
       where
         lo :: String
-        lo = "1" <> stimes n "0"
+        lo = addNumericUnderscores $ "1" <> stimes n "0"
 
         hi :: String
-        hi = stimes (n + 1) "9"
+        hi = addNumericUnderscores $ stimes (n + 1) "9"
+
+        addNumericUnderscores :: String -> String
+        addNumericUnderscores = reverse . intercalate "_" . chunksOf 3 . reverse
 
 fromList :: [Natural] -> LogDistribution
 fromList ns = LogDistribution $ Bag.fromUnaryList $ logInterval <$> ns

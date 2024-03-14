@@ -12,6 +12,7 @@
 {-# HLINT ignore "Avoid restricted alias" #-}
 {-# HLINT ignore "Use newtype instead of data" #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Simulation.Model.Basic where
 
@@ -23,7 +24,13 @@ import Data.Bag
     ( Bag
     , CountList (CountList)
     , UnaryList (UnaryList)
+    , (:×:) ((:×:))
     )
+import qualified Data.Bag as Bag
+import Data.Distribution.Log
+    ( LogDistribution
+    )
+import qualified Data.Distribution.Log as LogDistribution
 import Data.Foldable
     ( Foldable (fold)
     )
@@ -58,6 +65,9 @@ import Deriving
     )
 import GHC.IsList
     ( IsList (fromList, toList)
+    )
+import Numeric.Natural
+    ( Natural
     )
 
 --------------------------------------------------------------------------------
@@ -164,6 +174,16 @@ txIsBalanced :: Tx -> Bool
 txIsBalanced tx =
     null (txValueDeficit tx) &&
     null (txValueSurplus tx)
+
+valueOfAsset :: Asset -> Value -> Natural :×: Asset
+valueOfAsset a (Value v) = Bag.count a v
+
+walletLogDistribution :: Wallet -> LogDistribution
+walletLogDistribution w =
+    LogDistribution.fromList lovelaceValues
+  where
+    lovelaceValues :: [Natural]
+    lovelaceValues = (\(n :×: _) -> n) . valueOfAsset Lovelace <$> toList w
 
 walletValue :: Wallet -> Value
 walletValue = fold . toList
