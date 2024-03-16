@@ -58,13 +58,18 @@ instance (Ord a, Successor a) => IsList (Distribution a) where
     toList = toList
 
 class Successor a where
-    successor :: a -> a
+    successor :: a -> Maybe a
 
 instance Successor Integer where
-    successor = succ
+    successor = Just . succ
 
 instance Successor Natural where
-    successor = succ
+    successor = Just . succ
+
+instance Successor Char where
+    successor a
+        | a >= maxBound = Nothing
+        | otherwise = Just (succ a)
 
 fromUnaryList :: Ord a => [a] -> Distribution a
 fromUnaryList as = Distribution $ Bag.fromUnaryList as
@@ -86,7 +91,7 @@ toListWithBounds lo hi d =
   where
     from !x
         | x > hi = []
-        | otherwise = x : from (successor x)
+        | otherwise = x : maybe [] from (successor x)
 
 empty :: Ord a => Distribution a
 empty = Distribution mempty
