@@ -16,7 +16,7 @@ module Data.Distribution where
 
 import Data.Bag
     ( Bag
-    , (:×:)
+    , (:×:) ((:×:))
     )
 import qualified Data.Bag as Bag
 import Data.Ratio
@@ -114,6 +114,67 @@ maximum (Distribution d) = Set.lookupMax (Bag.support d)
 count :: Ord a => a -> Distribution a -> Natural :×: a
 count i (Distribution d) = Bag.count i d
 
+topLeftCorner :: Text
+topLeftCorner = "┌"
+
+bottomLeftCorner :: Text
+bottomLeftCorner = "└"
+
+topLeftCornerRounded :: Text
+topLeftCornerRounded = "╭"
+
+bottomLeftCornerRounded :: Text
+bottomLeftCornerRounded = "╰"
+
+colourDefault :: Text
+colourDefault = "\ESC[0m"
+
+colourGreen :: Text
+colourGreen = "\ESC[32m"
+
+colourRed :: Text
+colourRed = "\ESC[31m"
+
+data BarResolution
+    = BarResolution1
+    | BarResolution2
+    | BarResolution8
+    deriving (Eq, Show)
+
+toBars
+    :: forall a. (Ord a, Show a, Successor a)
+    => Ratio Natural
+    -> BarResolution
+    -> Distribution a
+    -> [Text]
+toBars scalingFactor resolution d =
+    ["    " <> topLeftCorner] <>
+    (toBar <$> toList d) <>
+    ["    " <> bottomLeftCorner]
+  where
+    rationalToBar :: Ratio Natural -> Text
+    rationalToBar =
+        case resolution of
+            BarResolution1 -> rationalToBar1
+            BarResolution2 -> rationalToBar2
+            BarResolution8 -> rationalToBar8
+
+    toBar :: (Natural :×: a) -> Text
+    toBar (n :×: a) =
+        Text.pack (show a)
+        <> " ┤"
+        <> colourGreen
+        <> rationalToBar ((n % 1) * scalingFactor)
+        <> colourDefault
+        <> " "
+        <> Text.pack (show n)
+
+data Fraction2
+    = Fraction_0_2
+    | Fraction_1_2
+    | Fraction_2_2
+    deriving (Bounded, Enum, Eq, Show)
+
 data Fraction8
     = Fraction_0_8
     | Fraction_1_8
@@ -125,6 +186,12 @@ data Fraction8
     | Fraction_7_8
     | Fraction_8_8
     deriving (Bounded, Enum, Eq, Show)
+
+fraction2ToBar :: Fraction2 -> Text
+fraction2ToBar = \case
+    Fraction_0_2 -> ""
+    Fraction_1_2 -> "🬃"
+    Fraction_2_2 -> "🬋"
 
 fraction8ToBar :: Fraction8 -> Text
 fraction8ToBar = \case
@@ -138,14 +205,48 @@ fraction8ToBar = \case
     Fraction_7_8 -> "▉"
     Fraction_8_8 -> "█"
 
-naturalToBar :: Natural -> Text
-naturalToBar n = Text.replicate (fromIntegral n) "█"
+naturalToBar1 :: Natural -> Text
+naturalToBar1 n = Text.replicate (fromIntegral n) "🬋"
 
-rationalToBar :: Ratio Natural -> Text
-rationalToBar r =
-    naturalToBar n <> fraction8ToBar f
+naturalToBar2 :: Natural -> Text
+naturalToBar2 n = Text.replicate (fromIntegral n) "🬋"
+
+naturalToBar8 :: Natural -> Text
+naturalToBar8 n = Text.replicate (fromIntegral n) "█"
+
+rationalToBar1 :: Ratio Natural -> Text
+rationalToBar1 r =
+    naturalToBar1 n
+  where
+    (n, _) = properFraction r
+
+rationalToBar2 :: Ratio Natural -> Text
+rationalToBar2 r =
+    naturalToBar2 n <> fraction2ToBar f
+  where
+    (n, f) = properFraction2 r
+
+rationalToBar8 :: Ratio Natural -> Text
+rationalToBar8 r =
+    naturalToBar8 n <> fraction8ToBar f
   where
     (n, f) = properFraction8 r
+
+properFraction2 :: Ratio Natural -> (Natural, Fraction2)
+properFraction2 r =
+    (naturalPart, fractionalPart)
+  where
+    naturalPart :: Natural
+    naturalPart = floor r
+
+    fractionalPart :: Fraction2
+    fractionalPart
+        = toEnum
+        $ fromIntegral @Natural @Int
+        $ ceiling
+        $ 2 * ((n `mod` d) % d)
+      where
+        (n, d) = (numerator r, denominator r)
 
 properFraction8 :: Ratio Natural -> (Natural, Fraction8)
 properFraction8 r =
