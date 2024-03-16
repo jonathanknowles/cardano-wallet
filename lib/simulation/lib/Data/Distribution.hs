@@ -4,6 +4,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -11,6 +12,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Avoid restricted alias" #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module Data.Distribution where
 
@@ -19,6 +21,10 @@ import Data.Bag
     , (:×:) ((:×:))
     )
 import qualified Data.Bag as Bag
+import Data.List.NonEmpty
+    ( NonEmpty ((:|))
+    )
+import qualified Data.List.NonEmpty as NonEmpty
 import Data.Ratio
     ( Ratio
     , denominator
@@ -138,12 +144,20 @@ colourGreen = "\ESC[32m"
 colourRed :: Text
 colourRed = "\ESC[31m"
 
+colourYellow :: Text
+colourYellow = "\ESC[33m"
+
+colourBlue :: Text
+colourBlue = "\ESC[34m"
+
 newtype BarScale = BarScale (Ratio Natural)
     deriving (Eq, Show, Num)
 
 data Colour
     = Red
     | Green
+    | Blue
+    | Yellow
     deriving (Bounded, Enum)
 
 withColour :: Colour -> Text -> Text
@@ -153,7 +167,8 @@ withColour colour text =
     prefix = case colour of
         Red -> colourRed
         Green -> colourGreen
-
+        Blue -> colourBlue
+        Yellow -> colourYellow
     suffix = colourDefault
 
 data BarResolution
@@ -162,19 +177,34 @@ data BarResolution
     | BarResolution8
     deriving (Eq, Show)
 
+data BarConfig = BarConfig
+    { colours :: NonEmpty Colour
+    , resolution :: BarResolution
+    , scale :: Ratio Natural
+    }
+
+defaultBarConfig :: BarConfig
+defaultBarConfig = BarConfig
+    { colours = Green :| [Red]
+    , resolution = BarResolution2
+    , scale = 1 % 2
+    }
+
 toBars
     :: forall a. (Ord a, Show a, Successor a)
-    => BarResolution
-    -> BarScale
+    => BarConfig
     -> Distribution a
     -> [Text]
-toBars resolution (BarScale scale) d =
-    ["    " <> topLeftCorner] <>
-    (toBar <$> toList d) <>
-    ["    " <> bottomLeftCorner]
+toBars BarConfig {colours, resolution, scale} d = mconcat
+    [ [ Text.replicate (labelColumnWidth + 1) " " <> topLeftCorner ]
+    , [ toBar colour label n
+      | (colour, label, n) <- zip3 colourSequence labelsPadded counts
+      ]
+    , [ Text.replicate (labelColumnWidth + 1) " " <> bottomLeftCorner ]
+    ]
   where
-    colours :: [Colour]
-    colours = undefined
+    colourSequence :: [Colour]
+    colourSequence = NonEmpty.toList $ NonEmpty.cycle colours
 
     counts :: [Natural]
     counts = (\(n :×: _) -> n) <$> labelCountPairs
@@ -190,10 +220,10 @@ toBars resolution (BarScale scale) d =
       where
         pad :: Text -> Text
         pad label =
-            Text.replicate (labelWidthMax - Text.length label) " " <> label
+            Text.replicate (labelColumnWidth - Text.length label) " " <> label
 
-    labelWidthMax :: Int
-    labelWidthMax = Prelude.maximum (0 : (Text.length <$> labels))
+    labelColumnWidth :: Int
+    labelColumnWidth = Prelude.maximum (0 : (Text.length <$> labels))
 
     rationalToBar :: Ratio Natural -> Text
     rationalToBar =
@@ -202,13 +232,11 @@ toBars resolution (BarScale scale) d =
             BarResolution2 -> rationalToBar2
             BarResolution8 -> rationalToBar8
 
-    toBar :: (Natural :×: a) -> Text
-    toBar (n :×: a) =
-        Text.pack (show a)
+    toBar :: Colour -> Text -> Natural -> Text
+    toBar colour label n =
+        label
         <> " ┤"
-        <> colourGreen
-        <> rationalToBar ((n % 1) * scale)
-        <> colourDefault
+        <> withColour colour (rationalToBar ((n % 1) * scale))
         <> " "
         <> Text.pack (show n)
 
