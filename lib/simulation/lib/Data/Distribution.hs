@@ -46,6 +46,9 @@ import Prelude hiding
     , maximum
     , minimum
     )
+import qualified Prelude
+    ( maximum
+    )
 
 newtype Distribution a = Distribution (Bag a)
     deriving stock Eq
@@ -135,6 +138,24 @@ colourGreen = "\ESC[32m"
 colourRed :: Text
 colourRed = "\ESC[31m"
 
+newtype BarScale = BarScale (Ratio Natural)
+    deriving (Eq, Show, Num)
+
+data Colour
+    = Red
+    | Green
+    deriving (Bounded, Enum)
+
+withColour :: Colour -> Text -> Text
+withColour colour text =
+    prefix <> text <> suffix
+  where
+    prefix = case colour of
+        Red -> colourRed
+        Green -> colourGreen
+
+    suffix = colourDefault
+
 data BarResolution
     = BarResolution1
     | BarResolution2
@@ -143,15 +164,37 @@ data BarResolution
 
 toBars
     :: forall a. (Ord a, Show a, Successor a)
-    => Ratio Natural
-    -> BarResolution
+    => BarResolution
+    -> BarScale
     -> Distribution a
     -> [Text]
-toBars scalingFactor resolution d =
+toBars resolution (BarScale scale) d =
     ["    " <> topLeftCorner] <>
     (toBar <$> toList d) <>
     ["    " <> bottomLeftCorner]
   where
+    colours :: [Colour]
+    colours = undefined
+
+    counts :: [Natural]
+    counts = (\(n :×: _) -> n) <$> labelCountPairs
+
+    labelCountPairs :: [Natural :×: a]
+    labelCountPairs = toList d
+
+    labels :: [Text]
+    labels = (\(_ :×: a) -> Text.pack $ show a) <$> labelCountPairs
+
+    labelsPadded :: [Text]
+    labelsPadded = pad <$> labels
+      where
+        pad :: Text -> Text
+        pad label =
+            Text.replicate (labelWidthMax - Text.length label) " " <> label
+
+    labelWidthMax :: Int
+    labelWidthMax = Prelude.maximum (0 : (Text.length <$> labels))
+
     rationalToBar :: Ratio Natural -> Text
     rationalToBar =
         case resolution of
@@ -164,7 +207,7 @@ toBars scalingFactor resolution d =
         Text.pack (show a)
         <> " ┤"
         <> colourGreen
-        <> rationalToBar ((n % 1) * scalingFactor)
+        <> rationalToBar ((n % 1) * scale)
         <> colourDefault
         <> " "
         <> Text.pack (show n)
