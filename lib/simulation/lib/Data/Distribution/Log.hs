@@ -12,6 +12,12 @@ import Data.Bag
     , (:×:) ((:×:))
     )
 import qualified Data.Bag as Bag
+import Data.List
+    ( intercalate
+    )
+import Data.List.Split
+    ( chunksOf
+    )
 import Data.Semigroup
     ( Semigroup (stimes)
     )
@@ -29,8 +35,6 @@ import Prelude hiding
     ( lookup
     , maximum
     )
-import Data.List (intercalate)
-import Data.List.Split (chunksOf)
 
 newtype LogDistribution = LogDistribution (Bag LogInterval)
     deriving newtype Eq

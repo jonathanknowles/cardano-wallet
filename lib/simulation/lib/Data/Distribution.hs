@@ -3,10 +3,14 @@
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Avoid restricted alias" #-}
 
 module Data.Distribution where
 
@@ -15,7 +19,17 @@ import Data.Bag
     , (:×:)
     )
 import qualified Data.Bag as Bag
+import Data.Ratio
+    ( Ratio
+    , denominator
+    , numerator
+    , (%)
+    )
 import qualified Data.Set as Set
+import Data.Text
+    ( Text
+    )
+import qualified Data.Text as Text
 import Deriving
     ( AsList (AsList)
     , Prefix (Prefix)
@@ -94,3 +108,52 @@ maximum (Distribution d) = Set.lookupMax (Bag.support d)
 
 count :: Ord a => a -> Distribution a -> Natural :×: a
 count i (Distribution d) = Bag.count i d
+
+data Fraction8
+    = Fraction_0_8
+    | Fraction_1_8
+    | Fraction_2_8
+    | Fraction_3_8
+    | Fraction_4_8
+    | Fraction_5_8
+    | Fraction_6_8
+    | Fraction_7_8
+    | Fraction_8_8
+    deriving (Bounded, Enum, Eq, Show)
+
+fraction8ToBar :: Fraction8 -> Text
+fraction8ToBar = \case
+    Fraction_0_8 -> ""
+    Fraction_1_8 -> "▏"
+    Fraction_2_8 -> "▎"
+    Fraction_3_8 -> "▍"
+    Fraction_4_8 -> "▌"
+    Fraction_5_8 -> "▋"
+    Fraction_6_8 -> "▊"
+    Fraction_7_8 -> "▉"
+    Fraction_8_8 -> "█"
+
+naturalToBar :: Natural -> Text
+naturalToBar n = Text.replicate (fromIntegral n) "█"
+
+rationalToBar :: Ratio Natural -> Text
+rationalToBar r =
+    naturalToBar n <> fraction8ToBar f
+  where
+    (n, f) = properFraction8 r
+
+properFraction8 :: Ratio Natural -> (Natural, Fraction8)
+properFraction8 r =
+    (naturalPart, fractionalPart)
+  where
+    naturalPart :: Natural
+    naturalPart = floor r
+
+    fractionalPart :: Fraction8
+    fractionalPart
+        = toEnum
+        $ fromIntegral @Natural @Int
+        $ ceiling
+        $ 8 * ((n `mod` d) % d)
+      where
+        (n, d) = (numerator r, denominator r)
