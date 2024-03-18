@@ -21,6 +21,10 @@ import Data.Bag
     , (:×:) ((:×:))
     )
 import qualified Data.Bag as Bag
+import Data.List
+    ( foldl'
+    , transpose
+    )
 import Data.List.NonEmpty
     ( NonEmpty ((:|))
     )
@@ -55,8 +59,6 @@ import Prelude hiding
 import qualified Prelude
     ( maximum
     )
-import Data.List (transpose, foldl')
-import Data.Function (on)
 
 newtype Distribution a = Distribution (Bag a)
     deriving stock Eq
@@ -264,11 +266,12 @@ renderLabels toLabel as =
         width = columnWidth parts
 
 toBars
-    :: forall a. (Ord a, Show a, Successor a)
+    :: forall a. (Ord a, Successor a)
     => BarConfig
+    -> (a -> Label)
     -> Distribution a
     -> [Text]
-toBars BarConfig {colours, resolution, scale} d = mconcat
+toBars BarConfig {colours, resolution, scale} toLabel d = mconcat
     [ [ Text.replicate (labelColumnWidth + 1) " " <> topLeftCorner ]
     , [ toBar colour label n
       | (colour, label, n) <- zip3 colourSequence labelsPadded counts
@@ -286,7 +289,7 @@ toBars BarConfig {colours, resolution, scale} d = mconcat
     labelCountPairs = toList d
 
     labels :: [Text]
-    labels = (\(_ :×: a) -> Text.pack $ show a) <$> labelCountPairs
+    labels = renderLabels toLabel $ (\(_ :×: a) -> a) <$> labelCountPairs
 
     labelsPadded :: [Text]
     labelsPadded = pad <$> labels
