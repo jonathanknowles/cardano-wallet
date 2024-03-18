@@ -59,6 +59,11 @@ import Prelude hiding
 import qualified Prelude
     ( maximum
     )
+import Test.QuickCheck.Extra
+    ( GenCount (GenCount)
+    , GenSize (GenSize)
+    , arbitrarySampleList
+    )
 
 newtype Distribution a = Distribution (Bag a)
     deriving stock Eq
@@ -212,6 +217,20 @@ data Interval = Interval
     { inclusiveLowerBound :: Natural
     , exclusiveUpperBound :: Natural
     }
+    deriving stock (Eq, Ord, Show)
+
+instance Successor Interval where
+    successor (Interval lo hi) = pure (Interval hi (hi + (hi - lo)))
+
+newtype IntervalWidth = IntervalWidth Natural
+    deriving stock (Eq, Show)
+
+naturalToInterval :: IntervalWidth -> Natural -> Interval
+naturalToInterval (IntervalWidth intervalWidth) n =
+    Interval lo hi
+  where
+    lo = intervalWidth * (n `div` intervalWidth)
+    hi = lo + intervalWidth
 
 intervalToLabel :: Interval -> Label
 intervalToLabel (Interval lo hi) =
@@ -396,7 +415,29 @@ properFractionOf n r =
     fractionalPart
         = toEnum
         $ fromIntegral @Natural @Int
-        $ ceiling
+        $ floor
         $ fromIntegral n * ((rn `mod` rd) % rd)
       where
         (rn, rd) = (numerator r, denominator r)
+
+example :: Text
+example =
+    Text.unlines $
+    toBars
+        defaultBarConfig
+            { scale = (1%840)
+            , colours = Blue :| [Yellow, Red, Green]
+            }
+        intervalToLabel
+        distribution
+  where
+    distribution :: Distribution Interval
+    distribution = fromUnaryList intervals
+
+    intervals :: [Interval]
+    intervals = naturalToInterval (IntervalWidth 20) <$> values
+
+    values :: [Natural]
+    values =
+        fromIntegral @Int @Natural . abs . (+500)
+            <$> arbitrarySampleList (GenCount 1000000) (GenSize 500)

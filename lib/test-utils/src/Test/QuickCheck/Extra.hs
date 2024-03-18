@@ -34,6 +34,7 @@ module Test.QuickCheck.Extra
     , generateWith
     , arbitraryWith
     , arbitrarySample
+    , arbitrarySampleList
 
       -- * Shrinking
     , liftShrinker
@@ -319,6 +320,17 @@ arbitrarySample (GenCount count) (GenSize sizeMax) =
   where
     f :: Int -> Set a
     f i = Set.singleton $ arbitraryWith (GenSeed i) (GenSize (i `mod` sizeMax))
+
+arbitrarySampleList
+    :: forall a. (Arbitrary a)
+    => GenCount
+    -> GenSize
+    -> [a]
+arbitrarySampleList (GenCount count) (GenSize sizeMax) =
+    foldMap f [1 .. count]
+  where
+    f :: Int -> [a]
+    f i = pure $ arbitraryWith (GenSeed i) (GenSize (i `mod` sizeMax))
 
 --------------------------------------------------------------------------------
 -- Evaluating shrinkers
