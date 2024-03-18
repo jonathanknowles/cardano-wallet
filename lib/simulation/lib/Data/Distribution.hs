@@ -240,13 +240,13 @@ toBars BarConfig {colours, resolution, scale} d = mconcat
         <> " "
         <> Text.pack (show n)
 
-data Fraction2
+data FractionOf2
     = Fraction_0_2
     | Fraction_1_2
     | Fraction_2_2
     deriving (Bounded, Enum, Eq, Show)
 
-data Fraction8
+data FractionOf8
     = Fraction_0_8
     | Fraction_1_8
     | Fraction_2_8
@@ -258,13 +258,13 @@ data Fraction8
     | Fraction_8_8
     deriving (Bounded, Enum, Eq, Show)
 
-fraction2ToBar :: Fraction2 -> Text
+fraction2ToBar :: FractionOf2 -> Text
 fraction2ToBar = \case
     Fraction_0_2 -> ""
     Fraction_1_2 -> "🬃"
     Fraction_2_2 -> "🬋"
 
-fraction8ToBar :: Fraction8 -> Text
+fraction8ToBar :: FractionOf8 -> Text
 fraction8ToBar = \case
     Fraction_0_8 -> ""
     Fraction_1_8 -> "▏"
@@ -295,42 +295,36 @@ rationalToBar2 :: Ratio Natural -> Text
 rationalToBar2 r =
     naturalToBar2 n <> fraction2ToBar f
   where
-    (n, f) = properFraction2 r
+    (n, f) = properFractionOf2 r
 
 rationalToBar8 :: Ratio Natural -> Text
 rationalToBar8 r =
     naturalToBar8 n <> fraction8ToBar f
   where
-    (n, f) = properFraction8 r
+    (n, f) = properFractionOf8 r
 
-properFraction2 :: Ratio Natural -> (Natural, Fraction2)
-properFraction2 r =
+properFractionOf2 :: Ratio Natural -> (Natural, FractionOf2)
+properFractionOf2 = properFractionOf 2
+
+properFractionOf8 :: Ratio Natural -> (Natural, FractionOf8)
+properFractionOf8 = properFractionOf 8
+
+properFractionOf
+    :: forall fraction. Enum fraction
+    => Natural
+    -> Ratio Natural
+    -> (Natural, fraction)
+properFractionOf n r =
     (naturalPart, fractionalPart)
   where
     naturalPart :: Natural
     naturalPart = floor r
 
-    fractionalPart :: Fraction2
+    fractionalPart :: fraction
     fractionalPart
         = toEnum
         $ fromIntegral @Natural @Int
         $ ceiling
-        $ 2 * ((n `mod` d) % d)
+        $ fromIntegral n * ((rn `mod` rd) % rd)
       where
-        (n, d) = (numerator r, denominator r)
-
-properFraction8 :: Ratio Natural -> (Natural, Fraction8)
-properFraction8 r =
-    (naturalPart, fractionalPart)
-  where
-    naturalPart :: Natural
-    naturalPart = floor r
-
-    fractionalPart :: Fraction8
-    fractionalPart
-        = toEnum
-        $ fromIntegral @Natural @Int
-        $ ceiling
-        $ 8 * ((n `mod` d) % d)
-      where
-        (n, d) = (numerator r, denominator r)
+        (rn, rd) = (numerator r, denominator r)
