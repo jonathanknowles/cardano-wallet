@@ -243,7 +243,6 @@ toBars BarConfig {colours, resolution, scale} d = mconcat
 data FractionOf2
     = Fraction_0_2
     | Fraction_1_2
-    | Fraction_2_2
     deriving (Bounded, Enum, Eq, Show)
 
 data FractionOf8
@@ -255,14 +254,12 @@ data FractionOf8
     | Fraction_5_8
     | Fraction_6_8
     | Fraction_7_8
-    | Fraction_8_8
     deriving (Bounded, Enum, Eq, Show)
 
 fraction2ToBar :: FractionOf2 -> Text
 fraction2ToBar = \case
     Fraction_0_2 -> ""
     Fraction_1_2 -> "🬃"
-    Fraction_2_2 -> "🬋"
 
 fraction8ToBar :: FractionOf8 -> Text
 fraction8ToBar = \case
@@ -274,7 +271,6 @@ fraction8ToBar = \case
     Fraction_5_8 -> "▋"
     Fraction_6_8 -> "▊"
     Fraction_7_8 -> "▉"
-    Fraction_8_8 -> "█"
 
 naturalToBar1 :: Natural -> Text
 naturalToBar1 n = Text.replicate (fromIntegral n) "🬋"
