@@ -55,6 +55,8 @@ import Prelude hiding
 import qualified Prelude
     ( maximum
     )
+import Data.List (transpose, foldl')
+import Data.Function (on)
 
 newtype Distribution a = Distribution (Bag a)
     deriving stock Eq
@@ -189,6 +191,77 @@ defaultBarConfig = BarConfig
     , resolution = BarResolution2
     , scale = 1 % 2
     }
+
+data Alignment
+    = AlignLeft
+    | AlignRight
+    deriving stock (Eq, Show)
+
+newtype Label = Label [LabelPart]
+    deriving stock (Eq, Show)
+
+labelParts :: Label -> [LabelPart]
+labelParts (Label parts) = parts
+
+data LabelPart = LabelPart Alignment Text
+    deriving stock (Eq, Show)
+
+data Interval = Interval
+    { inclusiveLowerBound :: Natural
+    , exclusiveUpperBound :: Natural
+    }
+
+intervalToLabel :: Interval -> Label
+intervalToLabel (Interval lo hi) =
+    Label . fmap (LabelPart AlignRight) $ parts
+  where
+    parts =
+        [ "["
+        , Text.pack (show lo)
+        , ", "
+        , Text.pack (show hi)
+        , ")"
+        ]
+
+renderLabelPart :: Int -> LabelPart -> Text
+renderLabelPart paddedWidth (LabelPart alignment text) =
+    case alignment of
+        AlignLeft ->
+            text <> padding
+        AlignRight ->
+            padding <> text
+  where
+    labelPartWidth :: Int
+    labelPartWidth = Text.length text
+
+    padding :: Text
+    padding = Text.replicate paddingWidth " "
+
+    paddingWidth :: Int
+    paddingWidth = max 0 (paddedWidth - labelPartWidth)
+
+renderLabels :: (a -> Label) -> [a] -> [Text]
+renderLabels toLabel as =
+    mconcat <$> transpose renderedColumns
+  where
+    renderedColumns :: [[Text]]
+    renderedColumns = renderColumn <$> columns
+
+    columns :: [[LabelPart]]
+    columns = transpose $ labelParts . toLabel <$> as
+
+    columnWidth :: [LabelPart] -> Int
+    columnWidth = foldl' max 0 . fmap labelPartWidth
+
+    labelPartWidth :: LabelPart -> Int
+    labelPartWidth (LabelPart _ t) = Text.length t
+
+    renderColumn :: [LabelPart] -> [Text]
+    renderColumn parts =
+        renderLabelPart width <$> parts
+      where
+        width :: Int
+        width = columnWidth parts
 
 toBars
     :: forall a. (Ord a, Show a, Successor a)
