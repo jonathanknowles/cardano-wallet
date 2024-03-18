@@ -240,12 +240,12 @@ toBars BarConfig {colours, resolution, scale} d = mconcat
         <> " "
         <> Text.pack (show n)
 
-data FractionOf2
+data ProperFractionOf2
     = Fraction_0_2
     | Fraction_1_2
     deriving (Bounded, Enum, Eq, Show)
 
-data FractionOf8
+data ProperFractionOf8
     = Fraction_0_8
     | Fraction_1_8
     | Fraction_2_8
@@ -256,13 +256,13 @@ data FractionOf8
     | Fraction_7_8
     deriving (Bounded, Enum, Eq, Show)
 
-fraction2ToBar :: FractionOf2 -> Text
-fraction2ToBar = \case
+properFractionOf2ToBar :: ProperFractionOf2 -> Text
+properFractionOf2ToBar = \case
     Fraction_0_2 -> ""
     Fraction_1_2 -> "🬃"
 
-fraction8ToBar :: FractionOf8 -> Text
-fraction8ToBar = \case
+properFractionOf8ToBar :: ProperFractionOf8 -> Text
+properFractionOf8ToBar = \case
     Fraction_0_8 -> ""
     Fraction_1_8 -> "▏"
     Fraction_2_8 -> "▎"
@@ -289,20 +289,20 @@ rationalToBar1 r =
 
 rationalToBar2 :: Ratio Natural -> Text
 rationalToBar2 r =
-    naturalToBar2 n <> fraction2ToBar f
+    naturalToBar2 n <> properFractionOf2ToBar f
   where
     (n, f) = properFractionOf2 r
 
 rationalToBar8 :: Ratio Natural -> Text
 rationalToBar8 r =
-    naturalToBar8 n <> fraction8ToBar f
+    naturalToBar8 n <> properFractionOf8ToBar f
   where
     (n, f) = properFractionOf8 r
 
-properFractionOf2 :: Ratio Natural -> (Natural, FractionOf2)
+properFractionOf2 :: Ratio Natural -> (Natural, ProperFractionOf2)
 properFractionOf2 = properFractionOf 2
 
-properFractionOf8 :: Ratio Natural -> (Natural, FractionOf8)
+properFractionOf8 :: Ratio Natural -> (Natural, ProperFractionOf8)
 properFractionOf8 = properFractionOf 8
 
 properFractionOf
