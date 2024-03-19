@@ -13,6 +13,7 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Avoid restricted alias" #-}
 {-# LANGUAGE NamedFieldPuns #-}
+{-# LANGUAGE NumericUnderscores #-}
 
 module Data.Distribution where
 
@@ -23,12 +24,16 @@ import Data.Bag
 import qualified Data.Bag as Bag
 import Data.List
     ( foldl'
+    , intercalate
     , transpose
     )
 import Data.List.NonEmpty
     ( NonEmpty ((:|))
     )
 import qualified Data.List.NonEmpty as NonEmpty
+import Data.List.Split
+    ( chunksOf
+    )
 import Data.Ratio
     ( Ratio
     , denominator
@@ -238,11 +243,14 @@ intervalToLabel (Interval lo hi) =
   where
     parts =
         [ "["
-        , Text.pack (show lo)
+        , Text.pack (showNatural lo)
         , ", "
-        , Text.pack (show hi)
+        , Text.pack (showNatural hi)
         , ")"
         ]
+    showNatural :: Natural -> String
+    showNatural =
+        reverse . intercalate "," . chunksOf 3 . reverse . show
 
 renderLabelPart :: Int -> LabelPart -> Text
 renderLabelPart paddedWidth (LabelPart alignment text) =
@@ -435,9 +443,9 @@ example =
     distribution = fromUnaryList intervals
 
     intervals :: [Interval]
-    intervals = naturalToInterval (IntervalWidth 20) <$> values
+    intervals = naturalToInterval (IntervalWidth 20_000) <$> values
 
     values :: [Natural]
     values =
-        fromIntegral @Int @Natural . abs . (+500)
-            <$> arbitrarySampleList (GenCount 1000000) (GenSize 500)
+        fromIntegral @Int @Natural . abs . (+ 500_000)
+            <$> arbitrarySampleList (GenCount 100_0000) (GenSize 500_000)
