@@ -21,10 +21,14 @@ import Control.Monad.Random.Class
     ( MonadRandom
     )
 import Data.Bag
-    ( (×), type (:×:) ((:×:))
+    ( type (:×:) ((:×:))
+    , (×)
     )
 import GHC.IsList
     ( IsList (fromList)
+    )
+import Numeric.Natural
+    ( Natural
     )
 import Simulation.Implementation
     ( txBalancer
@@ -38,11 +42,16 @@ import Simulation.Model.Basic
     , TxBalancer (TxBalancer, balanceTx)
     , Value
     , Wallet
-    , applyTxToWallet, valueOfAsset
+    , applyTxToWallet
+    , valueOfAsset
     )
 import Test.QuickCheck
-    ( frequency, Arbitrary(arbitrary), Gen, scale, generate )
-import Numeric.Natural (Natural)
+    ( Arbitrary (arbitrary)
+    , Gen
+    , frequency
+    , generate
+    , scale
+    )
 
 genAction :: Gen Action
 genAction =

@@ -26,8 +26,17 @@ import Data.Bag
     , UnaryList (UnaryList)
     , (:×:) ((:×:))
     )
-import qualified Data.Text.IO as Text
 import qualified Data.Bag as Bag
+import Data.Distribution
+    ( Distribution
+    , Interval
+    , IntervalWidth (IntervalWidth)
+    , defaultBarConfig
+    , intervalToLabel
+    , naturalToInterval
+    , toBars
+    )
+import qualified Data.Distribution as Distribution
 import Data.Distribution.Log
     ( LogDistribution
     )
@@ -60,6 +69,7 @@ import Data.Text
     ( Text
     )
 import qualified Data.Text as Text
+import qualified Data.Text.IO as Text
 import Deriving
     ( AsList (AsList)
     , Prefix (Prefix)
@@ -70,8 +80,6 @@ import GHC.IsList
 import Numeric.Natural
     ( Natural
     )
-import Data.Distribution (Distribution, Interval, IntervalWidth (IntervalWidth), naturalToInterval, intervalToLabel, defaultBarConfig, toBars)
-import qualified Data.Distribution as Distribution
 
 --------------------------------------------------------------------------------
 -- Types
