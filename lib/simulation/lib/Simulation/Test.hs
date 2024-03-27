@@ -7,6 +7,7 @@
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Use newtype instead of data" #-}
 {-# HLINT ignore "Avoid restricted alias" #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Simulation.Test where
 
@@ -20,7 +21,7 @@ import Control.Monad.Random.Class
     ( MonadRandom
     )
 import Data.Bag
-    ( (×)
+    ( (×), type (:×:) ((:×:))
     )
 import GHC.IsList
     ( IsList (fromList)
@@ -37,27 +38,49 @@ import Simulation.Model.Basic
     , TxBalancer (TxBalancer, balanceTx)
     , Value
     , Wallet
-    , applyTxToWallet
+    , applyTxToWallet, valueOfAsset
     )
 import Test.QuickCheck
-    ( frequency
-    )
-import Test.QuickCheck.Gen
-    ( Gen
-    )
+    ( frequency, Arbitrary(arbitrary), Gen, scale, generate )
+import Numeric.Natural (Natural)
 
 genAction :: Gen Action
 genAction =
     frequency
-        [ (8, Deposit <$> genDepositValue)
-        , (7, Payment <$> genPaymentValue)
+        [ (0, Deposit <$> genDepositValue)
+        , (8, Payment <$> genPaymentValue)
         ]
 
 genDepositValue :: Gen Value
-genDepositValue = pure [ 50_000_000 × Lovelace ]
+genDepositValue =
+    naturalToLovelace <$> genNaturalDistribution 100_000_000 1_000_000
 
 genPaymentValue :: Gen Value
-genPaymentValue = pure [ 50_000_000 × Lovelace ]
+genPaymentValue =
+    naturalToLovelace <$> genNaturalDistribution 10_000_000 1_000_000
+
+genNaturalDistribution :: Natural -> Natural -> Gen Natural
+genNaturalDistribution mean variance =
+    positiveIntegerToNatural . (+ fromIntegral mean) <$> genOffset
+  where
+    genOffset :: Gen Integer
+    genOffset = scale (const (fromIntegral variance)) arbitrary
+
+    positiveIntegerToNatural :: Integer -> Natural
+    positiveIntegerToNatural i
+        | i < 0 = 0
+        | otherwise = fromIntegral i
+
+naturalToLovelace :: Natural -> Value
+naturalToLovelace v = [ v × Lovelace ]
+
+actionToLovelaceDelta :: Action -> Integer
+actionToLovelaceDelta = \case
+    Deposit v -> extract v
+    Payment v -> negate $ extract v
+  where
+    extract :: Value -> Integer
+    extract v = fromIntegral (case valueOfAsset Lovelace v of n :×: _ -> n)
 
 genActions :: Gen [Action]
 genActions = replicateM 2000 genAction
@@ -105,8 +128,13 @@ testWalletFruit :: Wallet
 testWalletFruit =
     [ [ 1_000_000 × Lovelace, 1 × Asset "🍎" ]
     , [ 1_000_000 × Lovelace, 1 × Asset "🍌" ]
+    , [ 1_000_000 × Lovelace, 1 × Asset "🍌" ]
+    , [ 1_000_000 × Lovelace, 1 × Asset "🍌" ]
+    , [ 1_000_000 × Lovelace, 1 × Asset "🍌" ]
+    , [ 1_000_000 × Lovelace, 1 × Asset "🍌" ]
+    , [ 1_000_000 × Lovelace, 1 × Asset "🍌" ]
     , [ 1_000_000 × Lovelace, 1 × Asset "🥥" ]
-    , [ 1_000_000 × Lovelace, 1 × Asset "🫐" ]
+    , [ 1_000_000 × Lovelace, 3 × Asset "🫐" ]
     ]
 
 testWalletAscendingUniform :: Wallet
@@ -118,3 +146,18 @@ testWalletBimodal = fromList $
     replicate 1_000 [1_000_000 × Lovelace]
     <>
     replicate 1 [1_000_000_000 × Lovelace]
+
+--------------------------------------------------------------------------------
+
+testInitialWallet :: Wallet
+testInitialWallet =
+    fromList $
+    replicate 1000 [1000_000_000 × Lovelace]
+
+genFinalWallet :: IO Wallet
+genFinalWallet = do
+    actions <- generate genActions
+    maybeResultWallet <- performActions actions testInitialWallet
+    case maybeResultWallet of
+        Nothing -> error "unable to generate wallet result"
+        Just w -> pure w

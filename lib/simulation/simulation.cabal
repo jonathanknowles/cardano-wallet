@@ -46,9 +46,9 @@ library
     , cardano-crypto-wrapper
     , cardano-ledger-allegra
     , cardano-ledger-alonzo
-    , cardano-ledger-binary
     , cardano-ledger-api
     , cardano-ledger-babbage
+    , cardano-ledger-binary
     , cardano-ledger-byron
     , cardano-ledger-conway
     , cardano-ledger-core
@@ -62,14 +62,16 @@ library
     , chart-svg
     , containers
     , MonadRandom
-    , monoidmap
     , monoid-subclasses
+    , monoidmap
     , optics-core
     , pretty-simple
     , QuickCheck
     , random
+    , random
     , random-shuffle
     , split
+    , statistics
     , std-gen-seed
     , text
     , time

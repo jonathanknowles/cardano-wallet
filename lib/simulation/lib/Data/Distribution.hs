@@ -434,7 +434,6 @@ example =
     toBars
         defaultBarConfig
             { scale = (1%840)
-            , colours = Blue :| [Yellow, Red, Green]
             }
         intervalToLabel
         distribution

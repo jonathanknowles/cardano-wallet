@@ -26,6 +26,7 @@ import Data.Bag
     , UnaryList (UnaryList)
     , (:×:) ((:×:))
     )
+import qualified Data.Text.IO as Text
 import qualified Data.Bag as Bag
 import Data.Distribution.Log
     ( LogDistribution
@@ -69,6 +70,8 @@ import GHC.IsList
 import Numeric.Natural
     ( Natural
     )
+import Data.Distribution (Distribution, Interval, IntervalWidth (IntervalWidth), naturalToInterval, intervalToLabel, defaultBarConfig, toBars)
+import qualified Data.Distribution as Distribution
 
 --------------------------------------------------------------------------------
 -- Types
@@ -177,6 +180,22 @@ txIsBalanced tx =
 
 valueOfAsset :: Asset -> Value -> Natural :×: Asset
 valueOfAsset a (Value v) = Bag.count a v
+
+walletDistribution :: IntervalWidth -> Wallet -> Distribution Interval
+walletDistribution intervalWidth w =
+    Distribution.fromUnaryList intervals
+  where
+    intervals :: [Interval]
+    intervals = naturalToInterval intervalWidth <$> lovelaceValues
+
+    lovelaceValues :: [Natural]
+    lovelaceValues = (\(n :×: _) -> n) . valueOfAsset Lovelace <$> toList w
+
+printWalletDistribution :: IntervalWidth -> Wallet -> IO ()
+printWalletDistribution intervalWidth w =
+    mapM_ Text.putStrLn $
+    toBars defaultBarConfig intervalToLabel $
+    walletDistribution intervalWidth w
 
 walletLogDistribution :: Wallet -> LogDistribution
 walletLogDistribution w =
