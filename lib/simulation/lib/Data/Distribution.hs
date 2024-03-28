@@ -65,11 +65,7 @@ import Test.QuickCheck.Extra
     , GenSize (GenSize)
     , arbitrarySampleList
     )
-import Text.Bar
-    ( rationalToBar1
-    , rationalToBar2
-    , rationalToBar8
-    )
+import qualified Text.Bar as Bar
 import Text.Colour
     ( Colour (Green, Red)
     , withColour
@@ -154,12 +150,6 @@ topLeftCornerRounded = "╭"
 bottomLeftCornerRounded :: Text
 bottomLeftCornerRounded = "╰"
 
-data BarResolution
-    = BarResolution1
-    | BarResolution2
-    | BarResolution8
-    deriving (Eq, Show)
-
 data BarScale
     = BarScaleRelative (Ratio Natural)
     | BarScaleAbsolute Natural
@@ -167,14 +157,14 @@ data BarScale
 
 data BarConfig = BarConfig
     { colours :: NonEmpty Colour
-    , resolution :: BarResolution
+    , resolution :: Bar.LengthResolution
     , scale :: BarScale
     }
 
 defaultBarConfig :: BarConfig
 defaultBarConfig = BarConfig
     { colours = Green :| [Red]
-    , resolution = BarResolution2
+    , resolution = Bar.LengthResolution2
     , scale = BarScaleRelative (1 % 2)
     }
 
@@ -302,18 +292,12 @@ toBars BarConfig {colours, resolution, scale} toLabel d = mconcat
     labelColumnWidth :: Int
     labelColumnWidth = Prelude.maximum (0 : (Text.length <$> labels))
 
-    rationalToBar :: Ratio Natural -> Text
-    rationalToBar =
-        case resolution of
-            BarResolution1 -> rationalToBar1
-            BarResolution2 -> rationalToBar2
-            BarResolution8 -> rationalToBar8
-
     toBar :: Colour -> Text -> Natural -> Text
     toBar colour label n =
         label
         <> " ┤"
-        <> withColour colour (rationalToBar barWidth)
+        <> withColour colour
+            (Bar.fromRational resolution Bar.LengthRoundDown barWidth)
         <> " "
         <> Text.pack (show n)
       where
