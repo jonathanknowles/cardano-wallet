@@ -49,8 +49,8 @@ import Deriving
 import Fraction
     ( ProperFractionOf2 (..)
     , ProperFractionOf8 (..)
-    , properFractionOf2
-    , properFractionOf8
+    , nearestProperFractionOf2
+    , nearestProperFractionOf8
     )
 import GHC.IsList
     ( IsList (Item)
@@ -362,13 +362,13 @@ rationalToBar2 :: Ratio Natural -> Text
 rationalToBar2 r =
     naturalToBar2 n <> properFractionOf2ToBar f
   where
-    (n, f) = properFractionOf2 RoundDown r
+    (n, f) = nearestProperFractionOf2 RoundDown r
 
 rationalToBar8 :: Ratio Natural -> Text
 rationalToBar8 r =
     naturalToBar8 n <> properFractionOf8ToBar f
   where
-    (n, f) = properFractionOf8 RoundDown r
+    (n, f) = nearestProperFractionOf8 RoundDown r
 
 example :: Text
 example =

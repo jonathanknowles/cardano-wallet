@@ -36,29 +36,29 @@ data ProperFractionOf8
     | Fraction_7_8
     deriving (Bounded, Enum, Eq, Show)
 
-properFractionOf2
+nearestProperFractionOf2
     :: RoundDirection
     -> Ratio Natural
     -> (Natural, ProperFractionOf2)
-properFractionOf2 = properFractionOf 2
+nearestProperFractionOf2 = nearestProperFractionOf 2
 
-properFractionOf8
+nearestProperFractionOf8
     :: RoundDirection
     -> Ratio Natural
     -> (Natural, ProperFractionOf8)
-properFractionOf8 = properFractionOf 8
+nearestProperFractionOf8 = nearestProperFractionOf 8
 
-properFractionOf
+nearestProperFractionOf
     :: forall fraction. Enum fraction
     => Natural
     -> RoundDirection
     -> Ratio Natural
     -> (Natural, fraction)
-properFractionOf n roundDirection r =
+nearestProperFractionOf n roundDirection r =
     (naturalPart, fractionalPart)
   where
     errorUnexpectedFractionalPartCount =
-        error "properFractionOf: unexpected fractional part count"
+        error "nearestProperFractionOf: unexpected fractional part count"
 
     naturalPart :: Natural
     naturalPart
