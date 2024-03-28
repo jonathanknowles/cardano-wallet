@@ -35,8 +35,6 @@ import Data.List.Split
     )
 import Data.Ratio
     ( Ratio
-    , denominator
-    , numerator
     , (%)
     )
 import qualified Data.Set as Set
@@ -47,6 +45,12 @@ import qualified Data.Text as Text
 import Deriving
     ( AsList (AsList)
     , Prefix (Prefix)
+    )
+import Fraction
+    ( ProperFractionOf2 (..)
+    , ProperFractionOf8 (..)
+    , properFractionOf2
+    , properFractionOf8
     )
 import GHC.IsList
     ( IsList (Item)
@@ -320,22 +324,6 @@ toBars BarConfig {colours, resolution, scale} toLabel d = mconcat
             BarScaleAbsolute a -> (a % 1)
             BarScaleRelative r -> (n % 1) * r
 
-data ProperFractionOf2
-    = Fraction_0_2
-    | Fraction_1_2
-    deriving (Bounded, Enum, Eq, Show)
-
-data ProperFractionOf8
-    = Fraction_0_8
-    | Fraction_1_8
-    | Fraction_2_8
-    | Fraction_3_8
-    | Fraction_4_8
-    | Fraction_5_8
-    | Fraction_6_8
-    | Fraction_7_8
-    deriving (Bounded, Enum, Eq, Show)
-
 properFractionOf2ToBar :: ProperFractionOf2 -> Text
 properFractionOf2ToBar = \case
     Fraction_0_2 -> ""
@@ -378,32 +366,6 @@ rationalToBar8 r =
     naturalToBar8 n <> properFractionOf8ToBar f
   where
     (n, f) = properFractionOf8 r
-
-properFractionOf2 :: Ratio Natural -> (Natural, ProperFractionOf2)
-properFractionOf2 = properFractionOf 2
-
-properFractionOf8 :: Ratio Natural -> (Natural, ProperFractionOf8)
-properFractionOf8 = properFractionOf 8
-
-properFractionOf
-    :: forall fraction. Enum fraction
-    => Natural
-    -> Ratio Natural
-    -> (Natural, fraction)
-properFractionOf n r =
-    (naturalPart, fractionalPart)
-  where
-    naturalPart :: Natural
-    naturalPart = floor r
-
-    fractionalPart :: fraction
-    fractionalPart
-        = toEnum
-        $ fromIntegral @Natural @Int
-        $ floor
-        $ fromIntegral n * ((rn `mod` rd) % rd)
-      where
-        (rn, rd) = (numerator r, denominator r)
 
 example :: Text
 example =

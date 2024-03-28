@@ -6,9 +6,13 @@ module Text.Colour where
 
 import Prelude
 
-import Data.Text (Text)
-import Numeric.Natural (Natural)
+import Data.Text
+    ( Text
+    )
 import qualified Data.Text as Text
+import Numeric.Natural
+    ( Natural
+    )
 
 data Colour
     = Red

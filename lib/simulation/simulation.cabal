@@ -82,6 +82,7 @@ library
       Data.Distribution
       Data.Distribution.Log
       Deriving
+      Fraction
       Simulation
       Simulation.Model.Basic
       Simulation.Model.Indexed
