@@ -25,7 +25,7 @@ import Data.Monoid.GCD
     ( OverlappingGCDMonoid
     )
 import Data.Monoid.Monus
-    ( Monus
+    ( Monus ((<\>))
     )
 import Data.Monoid.Null
     ( MonoidNull
@@ -61,9 +61,6 @@ newtype Bag a = Bag (MonoidMap a (Sum Natural))
     deriving newtype (LeftCancellative, RightCancellative, Cancellative)
     deriving newtype (OverlappingGCDMonoid, Monus)
 
-map :: Ord b => (a -> b) -> Bag a -> Bag b
-map f (Bag m) = Bag (MonoidMap.mapKeys f m)
-
 (×) :: Natural -> a -> Count a
 n × a = Count n a
 
@@ -98,11 +95,26 @@ instance Show a => Show (UnaryList (Bag a)) where
     show (UnaryList m) =
         "fromUnaryList " <> show (toUnaryList m)
 
+map :: Ord b => (a -> b) -> Bag a -> Bag b
+map f (Bag m) = Bag (MonoidMap.mapKeys f m)
+
+delete :: Ord a => a -> Bag a -> Bag a
+delete a (Bag m) = Bag $ MonoidMap.adjust (<\> Sum 1) a m
+
 insert :: Ord a => a -> Bag a -> Bag a
-insert a (Bag m) = Bag $ MonoidMap.adjust (+ 1) a m
+insert a (Bag m) = Bag $ MonoidMap.adjust (<> Sum 1) a m
+
+deleteCount :: Ord a => Count a -> Bag a -> Bag a
+deleteCount (Count n a) (Bag m) = Bag $ MonoidMap.adjust (<\> Sum n) a m
+
+insertCount :: Ord a => Count a -> Bag a -> Bag a
+insertCount (Count n a) (Bag m) = Bag $ MonoidMap.adjust (<> Sum n) a m
 
 count :: Ord a => a -> Bag a -> Count a
 count a (Bag m) = Count (coerce $ MonoidMap.get a m) a
+
+fromCount :: Ord a => Count a -> Bag a
+fromCount (Count n a) = Bag (MonoidMap.singleton a (Sum n))
 
 fromCountList :: Ord a => [Count a] -> Bag a
 fromCountList = Bag . MonoidMap.fromList . fmap fromMultiple

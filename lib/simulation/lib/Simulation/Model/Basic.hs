@@ -11,7 +11,6 @@
 {-# HLINT ignore "Avoid restricted alias" #-}
 {-# HLINT ignore "Use newtype instead of data" #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-{-# LANGUAGE TypeOperators #-}
 
 module Simulation.Model.Basic where
 
@@ -29,7 +28,7 @@ import qualified Data.Bag as Bag
 import Data.Distribution
     ( Distribution
     , Interval
-    , IntervalWidth (IntervalWidth)
+    , IntervalWidth
     , defaultBarConfig
     , intervalToLabel
     , naturalToInterval
