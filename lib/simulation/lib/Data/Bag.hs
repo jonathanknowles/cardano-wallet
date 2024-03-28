@@ -4,6 +4,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
 
 module Data.Bag where
 
@@ -62,13 +63,10 @@ newtype Bag a = Bag (MonoidMap a (Sum Natural))
     deriving newtype (OverlappingGCDMonoid, Monus)
 
 (×) :: Natural -> a -> Count a
-n × a = Count n a
+(×) = Count
 
 data Count a = Count !Natural !a
     deriving stock (Eq, Ord, Functor)
-
-newtype CountList a = CountList a
-newtype UnaryList a = UnaryList a
 
 instance Show a => Show (Count a) where
     show (Count n a) = showNatural n <> " × " <> show a
@@ -76,6 +74,9 @@ instance Show a => Show (Count a) where
         showNatural :: Natural -> String
         showNatural =
             reverse . intercalate "_" . chunksOf 3 . reverse . show
+
+newtype CountList a = CountList a
+newtype UnaryList a = UnaryList a
 
 instance Ord a => IsList (CountList (Bag a)) where
     type Item (CountList (Bag a)) = Count a

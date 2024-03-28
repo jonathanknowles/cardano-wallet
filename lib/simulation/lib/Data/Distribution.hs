@@ -164,9 +164,6 @@ colourYellow = "\ESC[33m"
 colourBlue :: Text
 colourBlue = "\ESC[34m"
 
-newtype BarScale = BarScale (Ratio Natural)
-    deriving (Eq, Show, Num)
-
 data Colour
     = Red
     | Green
@@ -191,17 +188,22 @@ data BarResolution
     | BarResolution8
     deriving (Eq, Show)
 
+data BarScale
+    = BarScaleRelative (Ratio Natural)
+    | BarScaleAbsolute Natural
+    deriving (Eq, Show)
+
 data BarConfig = BarConfig
     { colours :: NonEmpty Colour
     , resolution :: BarResolution
-    , scale :: Ratio Natural
+    , scale :: BarScale
     }
 
 defaultBarConfig :: BarConfig
 defaultBarConfig = BarConfig
     { colours = Green :| [Red]
     , resolution = BarResolution2
-    , scale = 1 % 2
+    , scale = BarScaleRelative (1 % 2)
     }
 
 data Alignment
@@ -339,9 +341,14 @@ toBars BarConfig {colours, resolution, scale} toLabel d = mconcat
     toBar colour label n =
         label
         <> " ┤"
-        <> withColour colour (rationalToBar ((n % 1) * scale))
+        <> withColour colour (rationalToBar barWidth)
         <> " "
         <> Text.pack (show n)
+      where
+        barWidth :: Ratio Natural
+        barWidth = case scale of
+            BarScaleAbsolute a -> (a % 1)
+            BarScaleRelative r -> (n % 1) * r
 
 data ProperFractionOf2
     = Fraction_0_2
@@ -433,7 +440,7 @@ example =
     Text.unlines $
     toBars
         defaultBarConfig
-            { scale = (1%840)
+            { scale = BarScaleRelative (1%840)
             }
         intervalToLabel
         distribution
