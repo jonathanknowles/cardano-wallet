@@ -49,7 +49,6 @@ import Deriving
 import Fraction
     ( ProperFractionOf2 (..)
     , ProperFractionOf8 (..)
-    , RoundStrategy (RoundDown)
     , properFractionOf2
     , properFractionOf8
     )
@@ -67,6 +66,9 @@ import Prelude hiding
     )
 import qualified Prelude
     ( maximum
+    )
+import Rounding
+    ( RoundDirection (RoundDown)
     )
 import Test.QuickCheck.Extra
     ( GenCount (GenCount)
