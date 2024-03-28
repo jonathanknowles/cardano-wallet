@@ -57,14 +57,24 @@ properFractionOf
 properFractionOf n roundDirection r =
     (naturalPart, fractionalPart)
   where
+    errorUnexpectedFractionalPartCount =
+        error "properFractionOf: unexpected fractional part count"
+
     naturalPart :: Natural
-    naturalPart = floor r
+    naturalPart
+        | fractionalPartCount == n = floor r + 1
+        | fractionalPartCount <  n = floor r
+        | otherwise                = errorUnexpectedFractionalPartCount
 
     fractionalPart :: fraction
     fractionalPart
-        = toEnum
-        $ fromIntegral @Natural @Int
-        $ round roundDirection
+        | fractionalPartCount == n = toEnum 0
+        | fractionalPartCount <  n = toEnum (fromIntegral fractionalPartCount)
+        | otherwise                = errorUnexpectedFractionalPartCount
+
+    fractionalPartCount :: Natural
+    fractionalPartCount
+        = round roundDirection
         $ fromIntegral n * ((rn `mod` rd) % rd)
       where
         (rn, rd) = (numerator r, denominator r)
