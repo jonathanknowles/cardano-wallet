@@ -65,11 +65,11 @@ import Test.QuickCheck.Extra
     , GenSize (GenSize)
     , arbitrarySampleList
     )
-import qualified Text.Bar as Bar
 import Text.Colour
     ( Colour (Green, Red)
     , withColour
     )
+import qualified Text.Bar as Bar
 
 newtype Distribution a = Distribution (Bag a)
     deriving stock Eq
@@ -150,22 +150,22 @@ topLeftCornerRounded = "╭"
 bottomLeftCornerRounded :: Text
 bottomLeftCornerRounded = "╰"
 
-data BarScale
-    = BarScaleRelative (Ratio Natural)
-    | BarScaleAbsolute Natural
+data BarLengthConfig
+    = BarLengthScalingFactor (Ratio Natural)
+    | BarLengthLimit Natural
     deriving (Eq, Show)
 
 data BarConfig = BarConfig
     { colours :: NonEmpty Colour
     , resolution :: Bar.LengthResolution
-    , scale :: BarScale
+    , scale :: BarLengthConfig
     }
 
 defaultBarConfig :: BarConfig
 defaultBarConfig = BarConfig
     { colours = Green :| [Red]
     , resolution = Bar.LengthResolution2
-    , scale = BarScaleRelative (1 % 2)
+    , scale = BarLengthScalingFactor (1 % 2)
     }
 
 data Alignment
@@ -303,15 +303,15 @@ toBars BarConfig {colours, resolution, scale} toLabel d = mconcat
       where
         barWidth :: Ratio Natural
         barWidth = case scale of
-            BarScaleAbsolute a -> (a % 1)
-            BarScaleRelative r -> (n % 1) * r
+            BarLengthLimit a -> (a % 1)
+            BarLengthScalingFactor r -> (n % 1) * r
 
 example :: Text
 example =
     Text.unlines $
     toBars
         defaultBarConfig
-            { scale = BarScaleRelative (1%840)
+            { scale = BarLengthScalingFactor (1%840)
             }
         intervalToLabel
         distribution
