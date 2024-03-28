@@ -19,7 +19,7 @@ module Data.Distribution where
 
 import Data.Bag
     ( Bag
-    , (:×:) ((:×:))
+    , Count (Count)
     )
 import qualified Data.Bag as Bag
 import Data.List
@@ -76,7 +76,7 @@ newtype Distribution a = Distribution (Bag a)
     deriving newtype (Semigroup, Monoid)
 
 instance (Ord a, Successor a) => IsList (Distribution a) where
-    type Item (Distribution a) = Natural :×: a
+    type Item (Distribution a) = Count a
     fromList = fromList
     toList = toList
 
@@ -97,10 +97,10 @@ instance Successor Char where
 fromUnaryList :: Ord a => [a] -> Distribution a
 fromUnaryList as = Distribution $ Bag.fromUnaryList as
 
-fromList :: Ord a => [Natural :×: a] -> Distribution a
+fromList :: Ord a => [Count a] -> Distribution a
 fromList = Distribution . Bag.fromCountList
 
-toList :: (Ord a, Successor a) => Distribution a -> [Natural :×: a]
+toList :: (Ord a, Successor a) => Distribution a -> [Count a]
 toList d = maybe [] (\(lo, hi) -> toListWithBounds lo hi d) (bounds d)
 
 toListWithBounds
@@ -108,7 +108,7 @@ toListWithBounds
     => a
     -> a
     -> Distribution a
-    -> [Natural :×: a]
+    -> [Count a]
 toListWithBounds lo hi d =
     (`count` d) <$> from lo
   where
@@ -134,7 +134,7 @@ minimum (Distribution d) = Set.lookupMin (Bag.support d)
 maximum :: Distribution a -> Maybe a
 maximum (Distribution d) = Set.lookupMax (Bag.support d)
 
-count :: Ord a => a -> Distribution a -> Natural :×: a
+count :: Ord a => a -> Distribution a -> Count a
 count i (Distribution d) = Bag.count i d
 
 topLeftCorner :: Text
@@ -310,13 +310,13 @@ toBars BarConfig {colours, resolution, scale} toLabel d = mconcat
     colourSequence = NonEmpty.toList $ NonEmpty.cycle colours
 
     counts :: [Natural]
-    counts = (\(n :×: _) -> n) <$> labelCountPairs
+    counts = (\(Count n _) -> n) <$> labelCountPairs
 
-    labelCountPairs :: [Natural :×: a]
+    labelCountPairs :: [Count a]
     labelCountPairs = toList d
 
     labels :: [Text]
-    labels = renderLabels toLabel $ (\(_ :×: a) -> a) <$> labelCountPairs
+    labels = renderLabels toLabel $ (\(Count _ a) -> a) <$> labelCountPairs
 
     labelsPadded :: [Text]
     labelsPadded = pad <$> labels

@@ -174,7 +174,7 @@ import Control.Monad.Trans.Except
     ( runExceptT
     )
 import Data.Bag
-    ( (:×:) ((:×:))
+    ( Count (Count)
     , (×)
     )
 import Data.Bifunctor
@@ -220,7 +220,6 @@ import Data.Time.Clock.POSIX
 import GHC.IsList
     ( IsList (fromList, toList)
     )
-import GHC.Natural
 import qualified Internal.Cardano.Write.Tx.Balance
 import Test.QuickCheck.Extra
     ( GenCount (GenCount)
@@ -458,12 +457,12 @@ toLedgerValue v =
         sum (mapMaybe getLovelaceQuantity (toList v))
 
     getAssetQuantity = \case
-        (_ :×: Lovelace) -> Nothing
-        (q :×: Asset i) -> Just (i, fromIntegral q)
+        (Count _ Lovelace) -> Nothing
+        (Count q (Asset i)) -> Just (i, fromIntegral q)
 
     getLovelaceQuantity = \case
-        (q :×: Lovelace) -> Just (fromIntegral q)
-        (_ :×: Asset _) -> Nothing
+        (Count q Lovelace) -> Just (fromIntegral q)
+        (Count _ (Asset _)) -> Nothing
 
     transform
         :: (Text, Integer)
@@ -481,7 +480,7 @@ fromLedgerValue
   where
     transform
         :: (LedgerPolicyId, LedgerAssetName, Integer)
-        -> (Natural :×: Asset)
+        -> (Count Asset)
     transform (ledgerPolicyId, ledgerAssetName, v) =
         fromIntegral v
         ×

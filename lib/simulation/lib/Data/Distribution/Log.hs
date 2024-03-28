@@ -1,15 +1,14 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Data.Distribution.Log where
 
 import Data.Bag
     ( Bag
+    , Count (Count)
     , CountList
-    , (:×:) ((:×:))
     )
 import qualified Data.Bag as Bag
 import Data.List
@@ -96,7 +95,7 @@ instance Show LogInterval where
 fromList :: [Natural] -> LogDistribution
 fromList ns = LogDistribution $ Bag.fromUnaryList $ logInterval <$> ns
 
-toList :: LogDistribution -> [(Natural :×: LogInterval)]
+toList :: LogDistribution -> [Count LogInterval]
 toList d =
     case maximum d of
         Nothing -> []
@@ -106,11 +105,11 @@ toList d =
 insert :: Natural -> LogDistribution -> LogDistribution
 insert n (LogDistribution d) = LogDistribution $ Bag.insert (logInterval n) d
 
-lookup :: LogInterval -> LogDistribution -> Natural :×: LogInterval
+lookup :: LogInterval -> LogDistribution -> Count LogInterval
 lookup interval (LogDistribution d) = Bag.count interval d
 
 maximum :: LogDistribution -> Maybe LogInterval
 maximum (LogDistribution d) =
     case reverse (Bag.toCountList d) of
         [] -> Nothing
-        (_ :×: i) : _ -> Just i
+        (Count _ i) : _ -> Just i

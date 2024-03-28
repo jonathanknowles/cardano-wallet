@@ -1,7 +1,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE ExplicitNamespaces #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE KindSignatures #-}
@@ -22,9 +21,9 @@ import Prelude hiding
 
 import Data.Bag
     ( Bag
+    , Count (Count)
     , CountList (CountList)
     , UnaryList (UnaryList)
-    , (:×:) ((:×:))
     )
 import qualified Data.Bag as Bag
 import Data.Distribution
@@ -186,7 +185,7 @@ txIsBalanced tx =
     null (txValueDeficit tx) &&
     null (txValueSurplus tx)
 
-valueOfAsset :: Asset -> Value -> Natural :×: Asset
+valueOfAsset :: Asset -> Value -> Count Asset
 valueOfAsset a (Value v) = Bag.count a v
 
 walletDistribution :: IntervalWidth -> Wallet -> Distribution Interval
@@ -197,7 +196,7 @@ walletDistribution intervalWidth w =
     intervals = naturalToInterval intervalWidth <$> lovelaceValues
 
     lovelaceValues :: [Natural]
-    lovelaceValues = (\(n :×: _) -> n) . valueOfAsset Lovelace <$> toList w
+    lovelaceValues = (\(Count n _) -> n) . valueOfAsset Lovelace <$> toList w
 
 printWalletDistribution :: IntervalWidth -> Wallet -> IO ()
 printWalletDistribution intervalWidth w =
@@ -210,7 +209,7 @@ walletLogDistribution w =
     LogDistribution.fromList lovelaceValues
   where
     lovelaceValues :: [Natural]
-    lovelaceValues = (\(n :×: _) -> n) . valueOfAsset Lovelace <$> toList w
+    lovelaceValues = (\(Count n _) -> n) . valueOfAsset Lovelace <$> toList w
 
 walletValue :: Wallet -> Value
 walletValue = fold . toList

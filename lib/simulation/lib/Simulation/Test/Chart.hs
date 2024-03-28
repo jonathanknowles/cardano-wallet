@@ -39,7 +39,7 @@ import Control.Monad.Random.Class
     ( MonadRandom
     )
 import Data.Bag
-    ( type (:×:) ((:×:))
+    ( Count (Count)
     )
 import Data.Distribution
     ( Distribution
@@ -94,7 +94,7 @@ barDataFromDistribution d = BarData values rowLabels columnLabels
     values :: [[Double]]
     values
         = (: [])
-        . fmap (\(n :×: _) -> fromIntegral @Natural @Double n)
+        . fmap (\(Count n _) -> fromIntegral @Natural @Double n)
         $ Distribution.toListWithBounds 0 16 d
 
     rowLabels :: [Text]

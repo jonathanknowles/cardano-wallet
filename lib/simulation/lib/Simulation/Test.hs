@@ -21,7 +21,7 @@ import Control.Monad.Random.Class
     ( MonadRandom
     )
 import Data.Bag
-    ( type (:×:) ((:×:))
+    ( Count (Count)
     , (×)
     )
 import GHC.IsList
@@ -89,7 +89,7 @@ actionToLovelaceDelta = \case
     Payment v -> negate $ extract v
   where
     extract :: Value -> Integer
-    extract v = fromIntegral (case valueOfAsset Lovelace v of n :×: _ -> n)
+    extract v = fromIntegral (case valueOfAsset Lovelace v of Count n _ -> n)
 
 genActions :: Gen [Action]
 genActions = replicateM 2000 genAction

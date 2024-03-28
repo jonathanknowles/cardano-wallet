@@ -1,9 +1,9 @@
+{-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TupleSections #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE TypeOperators #-}
 
 module Data.Bag where
 
@@ -64,24 +64,24 @@ newtype Bag a = Bag (MonoidMap a (Sum Natural))
 map :: Ord b => (a -> b) -> Bag a -> Bag b
 map f (Bag m) = Bag (MonoidMap.mapKeys f m)
 
-data n :×: a = !n :×: !a
-    deriving stock (Eq, Ord)
+(×) :: Natural -> a -> Count a
+n × a = Count n a
 
-instance Show a => Show (Natural :×: a) where
-    show (n :×: a) = showNatural n <> " × " <> show a
+data Count a = Count !Natural !a
+    deriving stock (Eq, Ord, Functor)
+
+newtype CountList a = CountList a
+newtype UnaryList a = UnaryList a
+
+instance Show a => Show (Count a) where
+    show (Count n a) = showNatural n <> " × " <> show a
       where
         showNatural :: Natural -> String
         showNatural =
             reverse . intercalate "_" . chunksOf 3 . reverse . show
 
-(×) :: Natural -> a -> Natural :×: a
-n × a = n :×: a
-
-newtype CountList a = CountList a
-newtype UnaryList a = UnaryList a
-
 instance Ord a => IsList (CountList (Bag a)) where
-    type Item (CountList (Bag a)) = Natural :×: a
+    type Item (CountList (Bag a)) = Count a
     fromList = coerce fromCountList
     toList = coerce toCountList
 
@@ -101,18 +101,18 @@ instance Show a => Show (UnaryList (Bag a)) where
 insert :: Ord a => a -> Bag a -> Bag a
 insert a (Bag m) = Bag $ MonoidMap.adjust (+ 1) a m
 
-count :: Ord a => a -> Bag a -> Natural :×: a
-count a (Bag m) = coerce (MonoidMap.get a m) :×: a
+count :: Ord a => a -> Bag a -> Count a
+count a (Bag m) = Count (coerce $ MonoidMap.get a m) a
 
-fromCountList :: Ord a => [Natural :×: a] -> Bag a
+fromCountList :: Ord a => [Count a] -> Bag a
 fromCountList = Bag . MonoidMap.fromList . fmap fromMultiple
   where
-    fromMultiple (n :×: a) = (a, Sum n)
+    fromMultiple (Count n a) = (a, Sum n)
 
-toCountList :: Bag a -> [Natural :×: a]
+toCountList :: Bag a -> [Count a]
 toCountList (Bag s) = fmap toMultiple . MonoidMap.toList $ s
   where
-    toMultiple (a, Sum n) = (n :×: a)
+    toMultiple (a, Sum n) = Count n a
 
 fromUnaryList :: Ord a => [a] -> Bag a
 fromUnaryList = Bag . MonoidMap.fromList . fmap (, Sum 1)
@@ -120,10 +120,10 @@ fromUnaryList = Bag . MonoidMap.fromList . fmap (, Sum 1)
 toUnaryList :: Bag a -> [a]
 toUnaryList s = f =<< toCountList s
   where
-    f :: (Natural :×: a) -> [a]
-    f (n :×: a)
+    f :: (Count a) -> [a]
+    f (Count n a)
         | n == 0 = []
-        | otherwise = a : f ((n - 1) :×: a)
+        | otherwise = a : f (Count (n - 1) a)
 
 support :: Bag a -> Set a
 support (Bag m) = MonoidMap.nonNullKeys m
