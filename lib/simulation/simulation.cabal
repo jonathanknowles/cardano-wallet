@@ -90,6 +90,7 @@ library
       Simulation.Prelude
       Simulation.Test
       Simulation.Test.Chart
+      Text.Colour
 
 test-suite test
   import:             language, opts-exe

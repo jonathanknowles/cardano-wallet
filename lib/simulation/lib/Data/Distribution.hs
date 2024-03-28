@@ -68,6 +68,10 @@ import Test.QuickCheck.Extra
     , GenSize (GenSize)
     , arbitrarySampleList
     )
+import Text.Colour
+    ( Colour (Green, Red)
+    , withColour
+    )
 
 newtype Distribution a = Distribution (Bag a)
     deriving stock Eq
@@ -147,39 +151,6 @@ topLeftCornerRounded = "╭"
 
 bottomLeftCornerRounded :: Text
 bottomLeftCornerRounded = "╰"
-
-colourDefault :: Text
-colourDefault = "\ESC[0m"
-
-colourGreen :: Text
-colourGreen = "\ESC[32m"
-
-colourRed :: Text
-colourRed = "\ESC[31m"
-
-colourYellow :: Text
-colourYellow = "\ESC[33m"
-
-colourBlue :: Text
-colourBlue = "\ESC[34m"
-
-data Colour
-    = Red
-    | Green
-    | Blue
-    | Yellow
-    deriving (Bounded, Enum)
-
-withColour :: Colour -> Text -> Text
-withColour colour text =
-    prefix <> text <> suffix
-  where
-    prefix = case colour of
-        Red -> colourRed
-        Green -> colourGreen
-        Blue -> colourBlue
-        Yellow -> colourYellow
-    suffix = colourDefault
 
 data BarResolution
     = BarResolution1
