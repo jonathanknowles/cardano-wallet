@@ -61,6 +61,9 @@ newtype Bag a = Bag (MonoidMap a (Sum Natural))
     deriving newtype (LeftCancellative, RightCancellative, Cancellative)
     deriving newtype (OverlappingGCDMonoid, Monus)
 
+map :: Ord b => (a -> b) -> Bag a -> Bag b
+map f (Bag m) = Bag (MonoidMap.mapKeys f m)
+
 data n :×: a = !n :×: !a
     deriving stock (Eq, Ord)
 
