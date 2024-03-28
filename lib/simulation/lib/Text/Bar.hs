@@ -15,8 +15,8 @@ import Data.Text
 import Fraction
     ( ProperFractionOf2 (..)
     , ProperFractionOf8 (..)
-    , nearestProperFractionOf2
-    , nearestProperFractionOf8
+    , nearestFractionOf2
+    , nearestFractionOf8, FractionOf2 (FractionOf2), FractionOf8 (FractionOf8)
     )
 import Numeric.Natural
     ( Natural
@@ -26,6 +26,14 @@ import Rounding
     )
 
 import qualified Data.Text as Text
+
+fractionOf2ToBar :: FractionOf2 -> Text
+fractionOf2ToBar (FractionOf2 n f) =
+    naturalToBar2 n <> properFractionOf2ToBar f
+
+fractionOf8ToBar :: FractionOf8 -> Text
+fractionOf8ToBar (FractionOf8 n f) =
+    naturalToBar8 n <> properFractionOf8ToBar f
 
 naturalToBar1 :: Natural -> Text
 naturalToBar1 n = Text.replicate (fromIntegral n) "🬋"
@@ -46,13 +54,13 @@ rationalToBar2 :: Ratio Natural -> Text
 rationalToBar2 r =
     naturalToBar2 n <> properFractionOf2ToBar f
   where
-    (n, f) = nearestProperFractionOf2 RoundDown r
+    FractionOf2 n f = nearestFractionOf2 RoundDown r
 
 rationalToBar8 :: Ratio Natural -> Text
 rationalToBar8 r =
     naturalToBar8 n <> properFractionOf8ToBar f
   where
-    (n, f) = nearestProperFractionOf8 RoundDown r
+    FractionOf8 n f = nearestFractionOf8 RoundDown r
 
 properFractionOf2ToBar :: ProperFractionOf2 -> Text
 properFractionOf2ToBar = \case
