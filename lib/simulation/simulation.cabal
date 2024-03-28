@@ -83,6 +83,7 @@ library
       Data.Distribution.Log
       Deriving
       Fraction
+      Rounding
       Simulation
       Simulation.Model.Basic
       Simulation.Model.Indexed

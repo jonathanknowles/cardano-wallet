@@ -3,9 +3,22 @@
 
 module Fraction where
 
-import Prelude
-import Data.Ratio (Ratio, denominator, numerator, (%))
-import Numeric.Natural (Natural)
+import Data.Ratio
+    ( Ratio
+    , denominator
+    , numerator
+    , (%)
+    )
+import Numeric.Natural
+    ( Natural
+    )
+import Prelude hiding
+    ( round
+    )
+import Rounding
+    ( RoundDirection
+    , round
+    )
 
 data ProperFractionOf2
     = Fraction_0_2
@@ -23,18 +36,25 @@ data ProperFractionOf8
     | Fraction_7_8
     deriving (Bounded, Enum, Eq, Show)
 
-properFractionOf2 :: Ratio Natural -> (Natural, ProperFractionOf2)
+properFractionOf2
+    :: RoundDirection
+    -> Ratio Natural
+    -> (Natural, ProperFractionOf2)
 properFractionOf2 = properFractionOf 2
 
-properFractionOf8 :: Ratio Natural -> (Natural, ProperFractionOf8)
+properFractionOf8
+    :: RoundDirection
+    -> Ratio Natural
+    -> (Natural, ProperFractionOf8)
 properFractionOf8 = properFractionOf 8
 
 properFractionOf
     :: forall fraction. Enum fraction
     => Natural
+    -> RoundDirection
     -> Ratio Natural
     -> (Natural, fraction)
-properFractionOf n r =
+properFractionOf n roundDirection r =
     (naturalPart, fractionalPart)
   where
     naturalPart :: Natural
@@ -44,7 +64,7 @@ properFractionOf n r =
     fractionalPart
         = toEnum
         $ fromIntegral @Natural @Int
-        $ floor
+        $ round roundDirection
         $ fromIntegral n * ((rn `mod` rd) % rd)
       where
         (rn, rd) = (numerator r, denominator r)
