@@ -6,13 +6,26 @@ module Text.Bar where
 
 import Prelude
 
-import Numeric.Natural (Natural)
-import Data.Text (Text)
-import Fraction (ProperFractionOf2 (..), ProperFractionOf8 (..), nearestProperFractionOf2, nearestProperFractionOf8)
+import Data.Ratio
+    ( Ratio
+    )
+import Data.Text
+    ( Text
+    )
+import Fraction
+    ( ProperFractionOf2 (..)
+    , ProperFractionOf8 (..)
+    , nearestProperFractionOf2
+    , nearestProperFractionOf8
+    )
+import Numeric.Natural
+    ( Natural
+    )
+import Rounding
+    ( RoundDirection (RoundDown)
+    )
 
 import qualified Data.Text as Text
-import Data.Ratio (Ratio)
-import Rounding (RoundDirection(RoundDown))
 
 naturalToBar1 :: Natural -> Text
 naturalToBar1 n = Text.replicate (fromIntegral n) "🬋"
