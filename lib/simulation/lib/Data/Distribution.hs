@@ -42,7 +42,8 @@ import GHC.IsList
     )
 import qualified GHC.IsList as IsList
 import Interval
-    ( IntervalWidth (IntervalWidth)
+    ( Interval
+    , IntervalWidth (IntervalWidth)
     )
 import qualified Interval
 import Numeric.Natural
@@ -71,7 +72,7 @@ import Text.Colour
     )
 import qualified Text.Label as Label
 import Text.Label
-    ( LabelPart (LabelPart)
+    ( Label
     )
 
 newtype Distribution a = Distribution (Bag a)
