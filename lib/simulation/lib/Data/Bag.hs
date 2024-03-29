@@ -81,22 +81,22 @@ instance Show a => Show (Count a) where
         showNatural =
             reverse . intercalate "_" . chunksOf 3 . reverse . show
 
-newtype CountList a = CountList a
+newtype SparseCountList a = SparseCountList a
 newtype UnaryList a = UnaryList a
 
-instance Ord a => IsList (CountList (Bag a)) where
-    type Item (CountList (Bag a)) = Count a
+instance Ord a => IsList (SparseCountList (Bag a)) where
+    type Item (SparseCountList (Bag a)) = Count a
     fromList = coerce fromCountList
-    toList = coerce toCountList
+    toList = coerce toSparseCountList
 
 instance Ord a => IsList (UnaryList (Bag a)) where
     type Item (UnaryList (Bag a)) = a
     fromList = coerce fromUnaryList
     toList = coerce toUnaryList
 
-instance Show a => Show (CountList (Bag a)) where
-    show (CountList m) =
-        "fromCountList " <> show (toCountList m)
+instance Show a => Show (SparseCountList (Bag a)) where
+    show (SparseCountList m) =
+        "fromCountList " <> show (toSparseCountList m)
 
 instance Show a => Show (UnaryList (Bag a)) where
     show (UnaryList m) =
@@ -123,6 +123,9 @@ insertCount (Count n a) (Bag m) = Bag $ MonoidMap.adjust (<> Sum n) a m
 count :: Ord a => a -> Bag a -> Count a
 count a (Bag m) = Count (coerce $ MonoidMap.get a m) a
 
+singleton :: Ord a => a -> Bag a
+singleton a = fromCount (Count 1 a)
+
 fromCount :: Ord a => Count a -> Bag a
 fromCount (Count n a) = Bag (MonoidMap.singleton a (Sum n))
 
@@ -131,29 +134,27 @@ fromCountList = Bag . MonoidMap.fromList . fmap fromMultiple
   where
     fromMultiple (Count n a) = (a, Sum n)
 
-toCountList :: Bag a -> [Count a]
-toCountList (Bag s) = fmap toMultiple . MonoidMap.toList $ s
+toDenseCountList :: (Ord a, Successor a) => Bag a -> [Count a]
+toDenseCountList b =
+    maybe [] (uncurry toDenseCountListWithBounds) (bounds b)
+  where
+    toDenseCountListWithBounds lo hi =
+        (`count` b) <$> from lo
+      where
+        from !x
+            | x > hi = []
+            | otherwise = x : maybe [] from (successor x)
+
+toSparseCountList :: Bag a -> [Count a]
+toSparseCountList (Bag s) = fmap toMultiple . MonoidMap.toList $ s
   where
     toMultiple (a, Sum n) = Count n a
-
-toDenseCountListWithBounds
-    :: (Ord a, Successor a)
-    => a
-    -> a
-    -> Bag a
-    -> [Count a]
-toDenseCountListWithBounds lo hi b =
-    (`count` b) <$> from lo
-  where
-    from !x
-        | x > hi = []
-        | otherwise = x : maybe [] from (successor x)
 
 fromUnaryList :: Ord a => [a] -> Bag a
 fromUnaryList = Bag . MonoidMap.fromList . fmap (, Sum 1)
 
 toUnaryList :: Bag a -> [a]
-toUnaryList s = f =<< toCountList s
+toUnaryList s = f =<< toSparseCountList s
   where
     f :: (Count a) -> [a]
     f (Count n a)

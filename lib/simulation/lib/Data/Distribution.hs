@@ -82,15 +82,7 @@ fromList :: Ord a => [Count a] -> Distribution a
 fromList = coerce Bag.fromCountList
 
 toList :: (Ord a, Successor a) => Distribution a -> [Count a]
-toList d = maybe [] (\(lo, hi) -> toListWithBounds lo hi d) (bounds d)
-
-toListWithBounds
-    :: (Ord a, Successor a)
-    => a
-    -> a
-    -> Distribution a
-    -> [Count a]
-toListWithBounds = coerce Bag.toDenseCountListWithBounds
+toList = coerce Bag.toDenseCountList
 
 empty :: Ord a => Distribution a
 empty = coerce Bag.empty
