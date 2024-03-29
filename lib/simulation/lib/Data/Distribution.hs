@@ -29,7 +29,6 @@ import Data.Ratio
     ( Ratio
     , (%)
     )
-import qualified Data.Set as Set
 import Data.Text
     ( Text
     )
