@@ -6,9 +6,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE NoFieldSelectors #-}
-{-# LANGUAGE NumericUnderscores #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
@@ -41,11 +39,6 @@ import GHC.IsList
     ( IsList (Item)
     )
 import qualified GHC.IsList as IsList
-import Interval
-    ( Interval
-    , IntervalWidth (IntervalWidth)
-    )
-import qualified Interval
 import Numeric.Natural
     ( Natural
     )
@@ -59,11 +52,6 @@ import qualified Prelude
     )
 import Successor
     ( Successor (successor)
-    )
-import Test.QuickCheck.Extra
-    ( GenCount (GenCount)
-    , GenSize (GenSize)
-    , arbitrarySampleList
     )
 import qualified Text.Bar as Bar
 import Text.Colour
@@ -209,24 +197,3 @@ toBars BarConfig {colours, resolution, scale} toLabel d = mconcat
         barWidth = case scale of
             BarLengthLimit a -> (a % 1)
             BarLengthScalingFactor r -> (n % 1) * r
-
-example :: Text
-example =
-    Text.unlines $
-    toBars
-        defaultBarConfig
-            { scale = BarLengthScalingFactor (1%840)
-            }
-        Interval.toLabel
-        distribution
-  where
-    distribution :: Distribution Interval
-    distribution = fromUnaryList intervals
-
-    intervals :: [Interval]
-    intervals = Interval.fromNatural (IntervalWidth 20_000) <$> values
-
-    values :: [Natural]
-    values =
-        fromIntegral @Int @Natural . abs . (+ 500_000)
-            <$> arbitrarySampleList (GenCount 100_0000) (GenSize 500_000)

@@ -8,6 +8,7 @@
 {-# HLINT ignore "Use newtype instead of data" #-}
 {-# HLINT ignore "Avoid restricted alias" #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Simulation.Test where
 
@@ -24,9 +25,29 @@ import Data.Bag
     ( Count (Count)
     , (×)
     )
+import Data.Distribution
+    ( BarConfig (..)
+    , BarLengthConfig (BarLengthScalingFactor)
+    , Distribution
+    , defaultBarConfig
+    , fromUnaryList
+    , toBars
+    )
+import Data.Ratio
+    ( (%)
+    )
+import Data.Text
+    ( Text
+    )
+import qualified Data.Text as Text
 import GHC.IsList
     ( IsList (fromList)
     )
+import Interval
+    ( Interval
+    , IntervalWidth (IntervalWidth)
+    )
+import qualified Interval
 import Numeric.Natural
     ( Natural
     )
@@ -51,6 +72,11 @@ import Test.QuickCheck
     , frequency
     , generate
     , scale
+    )
+import Test.QuickCheck.Extra
+    ( GenCount (GenCount)
+    , GenSize (GenSize)
+    , arbitrarySampleList
     )
 
 genAction :: Gen Action
@@ -170,3 +196,26 @@ genFinalWallet = do
     case maybeResultWallet of
         Nothing -> error "unable to generate wallet result"
         Just w -> pure w
+
+--------------------------------------------------------------------------------
+
+exampleDistribution :: Text
+exampleDistribution =
+    Text.unlines $
+    toBars
+        defaultBarConfig
+            { scale = BarLengthScalingFactor (1%840)
+            }
+        Interval.toLabel
+        distribution
+  where
+    distribution :: Distribution Interval
+    distribution = fromUnaryList intervals
+
+    intervals :: [Interval]
+    intervals = Interval.fromNatural (IntervalWidth 20_000) <$> values
+
+    values :: [Natural]
+    values =
+        fromIntegral @Int @Natural . abs . (+ 500_000)
+            <$> arbitrarySampleList (GenCount 100_0000) (GenSize 500_000)
