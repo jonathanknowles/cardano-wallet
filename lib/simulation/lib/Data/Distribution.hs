@@ -49,6 +49,11 @@ import GHC.IsList
     ( IsList (Item)
     )
 import qualified GHC.IsList as IsList
+import Interval
+    ( Interval (Interval)
+    , IntervalWidth (IntervalWidth)
+    )
+import qualified Interval
 import Numeric.Natural
     ( Natural
     )
@@ -171,25 +176,6 @@ labelParts (Label parts) = parts
 data LabelPart = LabelPart Alignment Text
     deriving stock (Eq, Show)
 
-data Interval = Interval
-    { inclusiveLowerBound :: Natural
-    , exclusiveUpperBound :: Natural
-    }
-    deriving stock (Eq, Ord, Show)
-
-instance Successor Interval where
-    successor (Interval lo hi) = pure (Interval hi (hi + (hi - lo)))
-
-newtype IntervalWidth = IntervalWidth Natural
-    deriving stock (Eq, Show)
-
-naturalToInterval :: IntervalWidth -> Natural -> Interval
-naturalToInterval (IntervalWidth intervalWidth) n =
-    Interval lo hi
-  where
-    lo = intervalWidth * (n `div` intervalWidth)
-    hi = lo + intervalWidth
-
 intervalToLabel :: Interval -> Label
 intervalToLabel (Interval lo hi) =
     Label . fmap (LabelPart AlignRight) $ parts
@@ -309,7 +295,7 @@ example =
     distribution = fromUnaryList intervals
 
     intervals :: [Interval]
-    intervals = naturalToInterval (IntervalWidth 20_000) <$> values
+    intervals = Interval.fromNatural (IntervalWidth 20_000) <$> values
 
     values :: [Natural]
     values =

@@ -27,11 +27,8 @@ import Data.Bag
 import qualified Data.Bag as Bag
 import Data.Distribution
     ( Distribution
-    , Interval
-    , IntervalWidth
     , defaultBarConfig
     , intervalToLabel
-    , naturalToInterval
     , toBars
     )
 import qualified Data.Distribution as Distribution
@@ -75,6 +72,11 @@ import Deriving
 import GHC.IsList
     ( IsList (fromList, toList)
     )
+import Interval
+    ( Interval
+    , IntervalWidth
+    )
+import qualified Interval
 import Numeric.Natural
     ( Natural
     )
@@ -192,7 +194,7 @@ walletDistribution intervalWidth w =
     Distribution.fromUnaryList intervals
   where
     intervals :: [Interval]
-    intervals = naturalToInterval intervalWidth <$> lovelaceValues
+    intervals = Interval.fromNatural intervalWidth <$> lovelaceValues
 
     lovelaceValues :: [Natural]
     lovelaceValues = (\(Count n _) -> n) . valueOfAsset Lovelace <$> toList w
