@@ -1,6 +1,14 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Fraction where
+module Fraction
+    ( FractionOf2 (FractionOf2)
+    , FractionOf8 (FractionOf8)
+    , ProperFractionOf2 (..)
+    , ProperFractionOf8 (..)
+    , nearestFractionOf2
+    , nearestFractionOf8
+    )
+    where
 
 import Data.Ratio
     ( Ratio
