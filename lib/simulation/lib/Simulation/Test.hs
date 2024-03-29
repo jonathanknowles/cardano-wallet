@@ -26,10 +26,10 @@ import Data.Bag
     , (×)
     )
 import Data.Distribution
-    ( BarConfig (..)
-    , BarLengthConfig (BarLengthScalingFactor)
+    ( BarChartOptions (..)
+    , BarLengthConfig (BarLengthScale)
     , Distribution
-    , defaultBarConfig
+    , defaultBarChartOptions
     , fromUnaryList
     , toBars
     )
@@ -203,8 +203,8 @@ exampleDistribution :: Text
 exampleDistribution =
     Text.unlines $
     toBars
-        defaultBarConfig
-            { scale = BarLengthScalingFactor (1%840)
+        defaultBarChartOptions
+            { scale = BarLengthScale (1%840)
             }
         Interval.toLabel
         distribution

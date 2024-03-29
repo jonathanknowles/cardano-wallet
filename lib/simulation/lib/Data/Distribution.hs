@@ -10,6 +10,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# LANGUAGE LambdaCase #-}
 
 module Data.Distribution where
 
@@ -129,30 +130,42 @@ bottomLeftCornerRounded :: Text
 bottomLeftCornerRounded = "╰"
 
 data BarLengthConfig
-    = BarLengthScalingFactor (Ratio Natural)
+    = BarLengthScale (Ratio Natural)
     | BarLengthLimit Natural
     deriving (Eq, Show)
 
-data BarConfig = BarConfig
+data BarChartOptions = BarChartOptions
     { colours :: NonEmpty Colour
-    , resolution :: Bar.LengthResolution
+    , resolution :: BarChartResolution
     , scale :: BarLengthConfig
     }
 
-defaultBarConfig :: BarConfig
-defaultBarConfig = BarConfig
+data BarChartResolution
+    = BarChartResolution1
+    | BarChartResolution2
+    | BarChartResolution8
+    deriving (Eq, Show)
+
+defaultBarChartOptions :: BarChartOptions
+defaultBarChartOptions = BarChartOptions
     { colours = Green :| [Red]
-    , resolution = Bar.LengthResolution2
-    , scale = BarLengthScalingFactor (1 % 2)
+    , resolution = BarChartResolution2
+    , scale = BarLengthScale (1 % 2)
     }
+
+convertResolution :: BarChartResolution -> Bar.LengthResolution
+convertResolution = \case
+    BarChartResolution1 -> Bar.LengthResolution1
+    BarChartResolution2 -> Bar.LengthResolution2
+    BarChartResolution8 -> Bar.LengthResolution8
 
 toBars
     :: forall a. (Ord a, Successor a)
-    => BarConfig
+    => BarChartOptions
     -> (a -> Label)
     -> Distribution a
     -> [Text]
-toBars BarConfig {colours, resolution, scale} toLabel d = mconcat
+toBars BarChartOptions {colours, resolution, scale} toLabel d = mconcat
     [ [ Text.replicate (labelColumnWidth + 1) " " <> topLeftCorner ]
     , [ toBar colour label n
       | (colour, label, n) <- zip3 colourSequence labelsPadded counts
@@ -189,11 +202,14 @@ toBars BarConfig {colours, resolution, scale} toLabel d = mconcat
         label
         <> " ┤"
         <> withColour colour
-            (Bar.fromRational resolution Bar.LengthRoundDown barWidth)
+            (Bar.fromRational barResolution Bar.LengthRoundDown barWidth)
         <> " "
         <> Text.pack (show n)
       where
+        barResolution :: Bar.LengthResolution
+        barResolution = convertResolution resolution
+
         barWidth :: Ratio Natural
         barWidth = case scale of
             BarLengthLimit a -> (a % 1)
-            BarLengthScalingFactor r -> (n % 1) * r
+            BarLengthScale r -> (n % 1) * r

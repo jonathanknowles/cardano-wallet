@@ -27,7 +27,7 @@ import Data.Bag
 import qualified Data.Bag as Bag
 import Data.Distribution
     ( Distribution
-    , defaultBarConfig
+    , defaultBarChartOptions
     , toBars
     )
 import qualified Data.Distribution as Distribution
@@ -201,7 +201,7 @@ walletDistribution intervalWidth w =
 printWalletDistribution :: IntervalWidth -> Wallet -> IO ()
 printWalletDistribution intervalWidth w =
     mapM_ Text.putStrLn $
-    toBars defaultBarConfig Interval.toLabel $
+    toBars defaultBarChartOptions Interval.toLabel $
     walletDistribution intervalWidth w
 
 walletLogDistribution :: Wallet -> LogDistribution
