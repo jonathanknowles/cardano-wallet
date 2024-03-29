@@ -65,11 +65,11 @@ import Test.QuickCheck.Extra
     , GenSize (GenSize)
     , arbitrarySampleList
     )
+import qualified Text.Bar as Bar
 import Text.Colour
     ( Colour (Green, Red)
     , withColour
     )
-import qualified Text.Bar as Bar
 
 newtype Distribution a = Distribution (Bag a)
     deriving stock Eq

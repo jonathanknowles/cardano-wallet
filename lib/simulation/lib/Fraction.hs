@@ -1,4 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Fraction
     ( FractionOf2 (FractionOf2)
@@ -12,8 +13,6 @@ module Fraction
 
 import Data.Ratio
     ( Ratio
-    , denominator
-    , numerator
     , (%)
     )
 import Numeric.Natural
@@ -68,26 +67,10 @@ nearestFractionOf
     -> Ratio Natural
     -> (Natural, fraction)
 nearestFractionOf n roundDirection r =
-    (naturalPart, fractionalPart)
+    toProperFraction <$> nTimesResult `divMod` n
   where
-    errorUnexpectedFractionalPartCount =
-        error "nearestFractionOf: unexpected fractional part count"
+    nTimesResult :: Natural
+    nTimesResult = round roundDirection (r * (n % 1))
 
-    naturalPart :: Natural
-    naturalPart
-        | fractionalPartCount == n = floor r + 1
-        | fractionalPartCount <  n = floor r
-        | otherwise                = errorUnexpectedFractionalPartCount
-
-    fractionalPart :: fraction
-    fractionalPart
-        | fractionalPartCount == n = toEnum 0
-        | fractionalPartCount <  n = toEnum (fromIntegral fractionalPartCount)
-        | otherwise                = errorUnexpectedFractionalPartCount
-
-    fractionalPartCount :: Natural
-    fractionalPartCount
-        = round roundDirection
-        $ fromIntegral n * ((rn `mod` rd) % rd)
-      where
-        (rn, rd) = (numerator r, denominator r)
+    toProperFraction :: Natural -> fraction
+    toProperFraction = toEnum . fromIntegral @Natural @Int
