@@ -56,11 +56,11 @@ data LengthRoundingStrategy
 
 fromFractionOf2 :: FractionOf2 -> Text
 fromFractionOf2 (FractionOf2 n f) =
-    naturalToBar2 n <> properFractionOf2ToBar f
+    naturalToBar2 n <> fromProperFractionOf2 f
 
 fromFractionOf8 :: FractionOf8 -> Text
 fromFractionOf8 (FractionOf8 n f) =
-    naturalToBar8 n <> properFractionOf8ToBar f
+    naturalToBar8 n <> fromProperFractionOf8 f
 
 fromNatural :: Natural -> Text
 fromNatural = naturalToBar1
@@ -108,13 +108,13 @@ rationalToBar2 = (fromFractionOf2 .) . nearestFractionOf2
 rationalToBar8 :: RoundingStrategy -> Ratio Natural -> Text
 rationalToBar8 = (fromFractionOf8 .) . nearestFractionOf8
 
-properFractionOf2ToBar :: ProperFractionOf2 -> Text
-properFractionOf2ToBar = \case
+fromProperFractionOf2 :: ProperFractionOf2 -> Text
+fromProperFractionOf2 = \case
     Fraction_0_2 -> ""
     Fraction_1_2 -> "🬃"
 
-properFractionOf8ToBar :: ProperFractionOf8 -> Text
-properFractionOf8ToBar = \case
+fromProperFractionOf8 :: ProperFractionOf8 -> Text
+fromProperFractionOf8 = \case
     Fraction_0_8 -> ""
     Fraction_1_8 -> "▏"
     Fraction_2_8 -> "▎"
