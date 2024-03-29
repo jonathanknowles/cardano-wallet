@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DeriveFunctor #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -7,7 +8,10 @@
 
 module Data.Bag where
 
-import Prelude
+import Prelude hiding
+    ( maximum
+    , minimum
+    )
 
 import Data.Coerce
     ( coerce
@@ -53,6 +57,9 @@ import GHC.IsList
 import Numeric.Natural
     ( Natural
     )
+import Successor
+    ( Successor (successor)
+    )
 
 newtype Bag a = Bag (MonoidMap a (Sum Natural))
     deriving stock Eq
@@ -95,6 +102,9 @@ instance Show a => Show (UnaryList (Bag a)) where
     show (UnaryList m) =
         "fromUnaryList " <> show (toUnaryList m)
 
+empty :: Ord a => Bag a
+empty = Bag mempty
+
 map :: Ord b => (a -> b) -> Bag a -> Bag b
 map f (Bag m) = Bag (MonoidMap.mapKeys f m)
 
@@ -126,6 +136,19 @@ toCountList (Bag s) = fmap toMultiple . MonoidMap.toList $ s
   where
     toMultiple (a, Sum n) = Count n a
 
+toDenseCountListWithBounds
+    :: (Ord a, Successor a)
+    => a
+    -> a
+    -> Bag a
+    -> [Count a]
+toDenseCountListWithBounds lo hi b =
+    (`count` b) <$> from lo
+  where
+    from !x
+        | x > hi = []
+        | otherwise = x : maybe [] from (successor x)
+
 fromUnaryList :: Ord a => [a] -> Bag a
 fromUnaryList = Bag . MonoidMap.fromList . fmap (, Sum 1)
 
@@ -139,6 +162,9 @@ toUnaryList s = f =<< toCountList s
 
 support :: Bag a -> Set a
 support (Bag m) = MonoidMap.nonNullKeys m
+
+bounds :: Bag a -> Maybe (a, a)
+bounds d = (,) <$> minimum d <*> maximum d
 
 minimum :: Bag a -> Maybe a
 minimum = Set.lookupMin . support

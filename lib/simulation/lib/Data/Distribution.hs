@@ -1,5 +1,4 @@
 {-# HLINT ignore "Avoid restricted alias" #-}
-{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -19,6 +18,9 @@ import Data.Bag
     , Count (Count)
     )
 import qualified Data.Bag as Bag
+import Data.Coerce
+    ( coerce
+    )
 import Data.List.NonEmpty
     ( NonEmpty ((:|))
     )
@@ -52,7 +54,7 @@ import qualified Prelude
     ( maximum
     )
 import Successor
-    ( Successor (successor)
+    ( Successor
     )
 import qualified Text.Bar as Bar
 import Text.Colour
@@ -75,10 +77,10 @@ instance (Ord a, Successor a) => IsList (Distribution a) where
     toList = toList
 
 fromUnaryList :: Ord a => [a] -> Distribution a
-fromUnaryList as = Distribution $ Bag.fromUnaryList as
+fromUnaryList = coerce Bag.fromUnaryList
 
 fromList :: Ord a => [Count a] -> Distribution a
-fromList = Distribution . Bag.fromCountList
+fromList = coerce Bag.fromCountList
 
 toList :: (Ord a, Successor a) => Distribution a -> [Count a]
 toList d = maybe [] (\(lo, hi) -> toListWithBounds lo hi d) (bounds d)
@@ -89,33 +91,25 @@ toListWithBounds
     -> a
     -> Distribution a
     -> [Count a]
-toListWithBounds lo hi d =
-    (`count` d) <$> from lo
-  where
-    from !x
-        | x > hi = []
-        | otherwise = x : maybe [] from (successor x)
+toListWithBounds = coerce Bag.toDenseCountListWithBounds
 
 empty :: Ord a => Distribution a
-empty = Distribution mempty
+empty = coerce Bag.empty
 
 bounds :: Distribution a -> Maybe (a, a)
-bounds d = do
-    lo <- minimum d
-    hi <- maximum d
-    pure (lo, hi)
+bounds = coerce Bag.bounds
 
 insert :: Ord a => a -> Distribution a -> Distribution a
-insert a (Distribution d) = Distribution (Bag.insert a d)
+insert = coerce Bag.insert
 
 minimum :: Distribution a -> Maybe a
-minimum (Distribution d) = Set.lookupMin (Bag.support d)
+minimum = coerce Bag.minimum
 
 maximum :: Distribution a -> Maybe a
-maximum (Distribution d) = Set.lookupMax (Bag.support d)
+maximum = coerce Bag.maximum
 
 count :: Ord a => a -> Distribution a -> Count a
-count i (Distribution d) = Bag.count i d
+count = coerce Bag.count
 
 topLeftCorner :: Text
 topLeftCorner = "┌"
