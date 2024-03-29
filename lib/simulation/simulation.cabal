@@ -92,6 +92,7 @@ library
       Simulation.Prelude
       Simulation.Test
       Simulation.Test.Chart
+      Successor
       Text.Bar
       Text.Colour
 

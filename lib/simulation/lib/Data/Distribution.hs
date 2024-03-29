@@ -60,6 +60,9 @@ import Prelude hiding
 import qualified Prelude
     ( maximum
     )
+import Successor
+    ( Successor (successor)
+    )
 import Test.QuickCheck.Extra
     ( GenCount (GenCount)
     , GenSize (GenSize)
@@ -80,20 +83,6 @@ instance (Ord a, Successor a) => IsList (Distribution a) where
     type Item (Distribution a) = Count a
     fromList = fromList
     toList = toList
-
-class Successor a where
-    successor :: a -> Maybe a
-
-instance Successor Integer where
-    successor = Just . succ
-
-instance Successor Natural where
-    successor = Just . succ
-
-instance Successor Char where
-    successor a
-        | a >= maxBound = Nothing
-        | otherwise = Just (succ a)
 
 fromUnaryList :: Ord a => [a] -> Distribution a
 fromUnaryList as = Distribution $ Bag.fromUnaryList as
