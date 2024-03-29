@@ -20,16 +20,10 @@ import Data.Bag
     , Count (Count)
     )
 import qualified Data.Bag as Bag
-import Data.List
-    ( intercalate
-    )
 import Data.List.NonEmpty
     ( NonEmpty ((:|))
     )
 import qualified Data.List.NonEmpty as NonEmpty
-import Data.List.Split
-    ( chunksOf
-    )
 import Data.Ratio
     ( Ratio
     , (%)
@@ -48,8 +42,7 @@ import GHC.IsList
     )
 import qualified GHC.IsList as IsList
 import Interval
-    ( Interval (Interval)
-    , IntervalWidth (IntervalWidth)
+    ( IntervalWidth (IntervalWidth)
     )
 import qualified Interval
 import Numeric.Natural
@@ -78,9 +71,7 @@ import Text.Colour
     )
 import qualified Text.Label as Label
 import Text.Label
-    ( Alignment (AlignRight)
-    , Label (Label)
-    , LabelPart (LabelPart)
+    ( LabelPart (LabelPart)
     )
 
 newtype Distribution a = Distribution (Bag a)
