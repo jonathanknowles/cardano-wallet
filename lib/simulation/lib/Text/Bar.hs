@@ -4,7 +4,7 @@
 
 module Text.Bar
     ( LengthResolution (..)
-    , LengthRounding (..)
+    , LengthRoundingStrategy (..)
     , fromFractionOf2
     , fromFractionOf8
     , fromNatural
@@ -49,7 +49,7 @@ data LengthResolution
     | LengthResolution8
     deriving (Eq, Show)
 
-data LengthRounding
+data LengthRoundingStrategy
     = LengthRoundUp
     | LengthRoundDown
     deriving (Eq, Show)
@@ -68,7 +68,7 @@ fromNatural = naturalToBar1
 -- Perhaps this shouldn't be in this module.
 fromRational
     :: LengthResolution
-    -> LengthRounding
+    -> LengthRoundingStrategy
     -> Ratio Natural
     -> Text
 fromRational resolution rounding ratio = case resolution of
@@ -76,14 +76,14 @@ fromRational resolution rounding ratio = case resolution of
     LengthResolution2 -> rationalToBar2 d ratio
     LengthResolution8 -> rationalToBar8 d ratio
   where
-    d = lengthRoundingToRoundingStrategy rounding
+    d = mapRoundingStrategy rounding
 
 --------------------------------------------------------------------------------
 -- Internal
 --------------------------------------------------------------------------------
 
-lengthRoundingToRoundingStrategy :: LengthRounding -> RoundingStrategy
-lengthRoundingToRoundingStrategy = \case
+mapRoundingStrategy :: LengthRoundingStrategy -> RoundingStrategy
+mapRoundingStrategy = \case
     LengthRoundUp   -> RoundUp
     LengthRoundDown -> RoundDown
 
