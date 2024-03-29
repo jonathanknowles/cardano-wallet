@@ -96,6 +96,7 @@ library
       Successor
       Text.Bar
       Text.Colour
+      Text.Label
 
 test-suite test
   import:             language, opts-exe

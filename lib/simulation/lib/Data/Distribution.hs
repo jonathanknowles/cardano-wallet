@@ -21,9 +21,7 @@ import Data.Bag
     )
 import qualified Data.Bag as Bag
 import Data.List
-    ( foldl'
-    , intercalate
-    , transpose
+    ( intercalate
     )
 import Data.List.NonEmpty
     ( NonEmpty ((:|))
@@ -77,6 +75,12 @@ import qualified Text.Bar as Bar
 import Text.Colour
     ( Colour (Green, Red)
     , withColour
+    )
+import qualified Text.Label as Label
+import Text.Label
+    ( Alignment (AlignRight)
+    , Label (Label)
+    , LabelPart (LabelPart)
     )
 
 newtype Distribution a = Distribution (Bag a)
@@ -162,20 +166,6 @@ defaultBarConfig = BarConfig
     , scale = BarLengthScalingFactor (1 % 2)
     }
 
-data Alignment
-    = AlignLeft
-    | AlignRight
-    deriving stock (Eq, Show)
-
-newtype Label = Label [LabelPart]
-    deriving stock (Eq, Show)
-
-labelParts :: Label -> [LabelPart]
-labelParts (Label parts) = parts
-
-data LabelPart = LabelPart Alignment Text
-    deriving stock (Eq, Show)
-
 intervalToLabel :: Interval -> Label
 intervalToLabel (Interval lo hi) =
     Label . fmap (LabelPart AlignRight) $ parts
@@ -190,46 +180,6 @@ intervalToLabel (Interval lo hi) =
     showNatural :: Natural -> String
     showNatural =
         reverse . intercalate "," . chunksOf 3 . reverse . show
-
-renderLabelPart :: Int -> LabelPart -> Text
-renderLabelPart paddedWidth (LabelPart alignment text) =
-    case alignment of
-        AlignLeft ->
-            text <> padding
-        AlignRight ->
-            padding <> text
-  where
-    labelPartWidth :: Int
-    labelPartWidth = Text.length text
-
-    padding :: Text
-    padding = Text.replicate paddingWidth " "
-
-    paddingWidth :: Int
-    paddingWidth = max 0 (paddedWidth - labelPartWidth)
-
-renderLabels :: (a -> Label) -> [a] -> [Text]
-renderLabels toLabel as =
-    mconcat <$> transpose renderedColumns
-  where
-    renderedColumns :: [[Text]]
-    renderedColumns = renderColumn <$> columns
-
-    columns :: [[LabelPart]]
-    columns = transpose $ labelParts . toLabel <$> as
-
-    columnWidth :: [LabelPart] -> Int
-    columnWidth = foldl' max 0 . fmap labelPartWidth
-
-    labelPartWidth :: LabelPart -> Int
-    labelPartWidth (LabelPart _ t) = Text.length t
-
-    renderColumn :: [LabelPart] -> [Text]
-    renderColumn parts =
-        renderLabelPart width <$> parts
-      where
-        width :: Int
-        width = columnWidth parts
 
 toBars
     :: forall a. (Ord a, Successor a)
@@ -255,7 +205,8 @@ toBars BarConfig {colours, resolution, scale} toLabel d = mconcat
     labelCountPairs = toList d
 
     labels :: [Text]
-    labels = renderLabels toLabel $ (\(Count _ a) -> a) <$> labelCountPairs
+    labels = Label.renderAsColumnWith toLabel $
+        (\(Count _ a) -> a) <$> labelCountPairs
 
     labelsPadded :: [Text]
     labelsPadded = pad <$> labels
