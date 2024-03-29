@@ -22,7 +22,7 @@ import Prelude hiding
     ( round
     )
 import Rounding
-    ( RoundDirection
+    ( RoundingStrategy
     , round
     )
 
@@ -49,13 +49,13 @@ data ProperFractionOf8
     deriving (Bounded, Enum, Eq, Show)
 
 nearestFractionOf2
-    :: RoundDirection
+    :: RoundingStrategy
     -> Ratio Natural
     -> FractionOf2
 nearestFractionOf2 = (uncurry FractionOf2 .) . nearestFractionOf 2
 
 nearestFractionOf8
-    :: RoundDirection
+    :: RoundingStrategy
     -> Ratio Natural
     -> FractionOf8
 nearestFractionOf8 = (uncurry FractionOf8 .) . nearestFractionOf 8
@@ -63,7 +63,7 @@ nearestFractionOf8 = (uncurry FractionOf8 .) . nearestFractionOf 8
 nearestFractionOf
     :: forall fraction. Enum fraction
     => Natural
-    -> RoundDirection
+    -> RoundingStrategy
     -> Ratio Natural
     -> (Natural, fraction)
 nearestFractionOf n roundDirection r =

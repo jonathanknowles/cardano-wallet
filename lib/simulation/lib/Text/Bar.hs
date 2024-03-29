@@ -34,7 +34,7 @@ import Numeric.Natural
     ( Natural
     )
 import Rounding
-    ( RoundDirection (RoundDown, RoundUp)
+    ( RoundingStrategy (RoundDown, RoundUp)
     )
 
 import qualified Data.Text as Text
@@ -76,14 +76,14 @@ fromRational resolution rounding ratio = case resolution of
     LengthResolution2 -> rationalToBar2 d ratio
     LengthResolution8 -> rationalToBar8 d ratio
   where
-    d = lengthRoundingToRoundDirection rounding
+    d = lengthRoundingToRoundingStrategy rounding
 
 --------------------------------------------------------------------------------
 -- Internal
 --------------------------------------------------------------------------------
 
-lengthRoundingToRoundDirection :: LengthRounding -> RoundDirection
-lengthRoundingToRoundDirection = \case
+lengthRoundingToRoundingStrategy :: LengthRounding -> RoundingStrategy
+lengthRoundingToRoundingStrategy = \case
     LengthRoundUp   -> RoundUp
     LengthRoundDown -> RoundDown
 
@@ -96,16 +96,16 @@ naturalToBar2 n = Text.replicate (fromIntegral n) "🬋"
 naturalToBar8 :: Natural -> Text
 naturalToBar8 n = Text.replicate (fromIntegral n) "█"
 
-rationalToBar1 :: RoundDirection -> Ratio Natural -> Text
+rationalToBar1 :: RoundingStrategy -> Ratio Natural -> Text
 rationalToBar1 _ r =
     naturalToBar1 n
   where
     (n, _) = properFraction r
 
-rationalToBar2 :: RoundDirection -> Ratio Natural -> Text
+rationalToBar2 :: RoundingStrategy -> Ratio Natural -> Text
 rationalToBar2 = (fromFractionOf2 .) . nearestFractionOf2
 
-rationalToBar8 :: RoundDirection -> Ratio Natural -> Text
+rationalToBar8 :: RoundingStrategy -> Ratio Natural -> Text
 rationalToBar8 = (fromFractionOf8 .) . nearestFractionOf8
 
 properFractionOf2ToBar :: ProperFractionOf2 -> Text
