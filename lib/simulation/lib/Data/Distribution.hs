@@ -1,3 +1,4 @@
+{-# HLINT ignore "Avoid restricted alias" #-}
 {-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingVia #-}
@@ -11,7 +12,6 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-{-# HLINT ignore "Avoid restricted alias" #-}
 
 module Data.Distribution where
 
@@ -166,21 +166,6 @@ defaultBarConfig = BarConfig
     , scale = BarLengthScalingFactor (1 % 2)
     }
 
-intervalToLabel :: Interval -> Label
-intervalToLabel (Interval lo hi) =
-    Label . fmap (LabelPart AlignRight) $ parts
-  where
-    parts =
-        [ "["
-        , Text.pack (showNatural lo)
-        , ", "
-        , Text.pack (showNatural hi)
-        , ")"
-        ]
-    showNatural :: Natural -> String
-    showNatural =
-        reverse . intercalate "," . chunksOf 3 . reverse . show
-
 toBars
     :: forall a. (Ord a, Successor a)
     => BarConfig
@@ -205,8 +190,9 @@ toBars BarConfig {colours, resolution, scale} toLabel d = mconcat
     labelCountPairs = toList d
 
     labels :: [Text]
-    labels = Label.renderAsColumnWith toLabel $
-        (\(Count _ a) -> a) <$> labelCountPairs
+    labels
+        = Label.renderManyAsColumn
+        $ fmap (toLabel . (\(Count _ a) -> a)) labelCountPairs
 
     labelsPadded :: [Text]
     labelsPadded = pad <$> labels
@@ -239,7 +225,7 @@ example =
         defaultBarConfig
             { scale = BarLengthScalingFactor (1%840)
             }
-        intervalToLabel
+        Interval.toLabel
         distribution
   where
     distribution :: Distribution Interval

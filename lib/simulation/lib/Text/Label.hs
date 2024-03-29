@@ -1,8 +1,17 @@
 {-# HLINT ignore "Avoid restricted alias" #-}
 {-# LANGUAGE DerivingStrategies #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE TypeApplications #-}
 
-module Text.Label where
+module Text.Label
+    ( Alignment (..)
+    , Label (..)
+    , LabelPart (..)
+    , toParts
+    , renderManyAsColumn
+    )
+    where
 
 import Prelude
 
@@ -16,6 +25,9 @@ import Data.Text
     ( Text
     )
 import qualified Data.Text as Text
+import Numeric.Natural
+    ( Natural
+    )
 
 data Alignment
     = AlignLeft
@@ -28,34 +40,41 @@ newtype Label = Label [LabelPart]
 data LabelPart = LabelPart Alignment Text
     deriving stock (Eq, Show)
 
+newtype LabelPartLength = LabelPartLength Natural
+    deriving stock (Eq, Ord, Show)
+    deriving newtype Num
+
 toParts :: Label -> [LabelPart]
 toParts (Label parts) = parts
 
-renderAsColumnWith :: (a -> Label) -> [a] -> [Text]
-renderAsColumnWith toLabel as =
+renderManyAsColumn :: [Label] -> [Text]
+renderManyAsColumn labels =
     mconcat <$> transpose renderedColumns
   where
     renderedColumns :: [[Text]]
     renderedColumns = renderColumn <$> columns
 
     columns :: [[LabelPart]]
-    columns = transpose $ toParts . toLabel <$> as
+    columns = transpose $ toParts <$> labels
 
-    columnWidth :: [LabelPart] -> Int
+    columnWidth :: [LabelPart] -> LabelPartLength
     columnWidth = foldl' max 0 . fmap labelPartWidth
 
-    labelPartWidth :: LabelPart -> Int
-    labelPartWidth (LabelPart _ t) = Text.length t
+    labelPartWidth :: LabelPart -> LabelPartLength
+    labelPartWidth (LabelPart _ t)
+        = LabelPartLength
+        $ fromIntegral @Int @Natural
+        $ Text.length t
 
     renderColumn :: [LabelPart] -> [Text]
     renderColumn parts =
         renderPart width <$> parts
       where
-        width :: Int
+        width :: LabelPartLength
         width = columnWidth parts
 
-renderPart :: Int -> LabelPart -> Text
-renderPart paddedWidth (LabelPart alignment text) =
+renderPart :: LabelPartLength -> LabelPart -> Text
+renderPart (LabelPartLength paddedWidth) (LabelPart alignment text) =
     case alignment of
         AlignLeft ->
             text <> padding
@@ -69,4 +88,5 @@ renderPart paddedWidth (LabelPart alignment text) =
     padding = Text.replicate paddingWidth " "
 
     paddingWidth :: Int
-    paddingWidth = max 0 (paddedWidth - labelPartWidth)
+    paddingWidth =
+        max 0 (fromIntegral @Natural @Int paddedWidth - labelPartWidth)

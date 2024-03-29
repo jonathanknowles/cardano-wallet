@@ -1,3 +1,5 @@
+{-# HLINT ignore "Avoid restricted alias" #-}
+{-# HLINT ignore "Use newtype instead of data" #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE DuplicateRecordFields #-}
@@ -8,8 +10,6 @@
 {-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# HLINT ignore "Avoid restricted alias" #-}
-{-# HLINT ignore "Use newtype instead of data" #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
 module Simulation.Model.Basic where
@@ -28,7 +28,6 @@ import qualified Data.Bag as Bag
 import Data.Distribution
     ( Distribution
     , defaultBarConfig
-    , intervalToLabel
     , toBars
     )
 import qualified Data.Distribution as Distribution
@@ -202,7 +201,7 @@ walletDistribution intervalWidth w =
 printWalletDistribution :: IntervalWidth -> Wallet -> IO ()
 printWalletDistribution intervalWidth w =
     mapM_ Text.putStrLn $
-    toBars defaultBarConfig intervalToLabel $
+    toBars defaultBarConfig Interval.toLabel $
     walletDistribution intervalWidth w
 
 walletLogDistribution :: Wallet -> LogDistribution
