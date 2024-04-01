@@ -25,12 +25,6 @@ import Data.Bag
     , UnaryList (UnaryList)
     )
 import qualified Data.Bag as Bag
-import Data.Distribution
-    ( Distribution
-    , defaultBarChartOptions
-    , toBars
-    )
-import qualified Data.Distribution as Distribution
 import Data.Distribution.Log
     ( LogDistribution
     )
@@ -78,6 +72,12 @@ import Interval
 import qualified Interval
 import Numeric.Natural
     ( Natural
+    )
+import qualified Text.BarChart as Distribution
+import Text.BarChart
+    ( Distribution
+    , defaultBarChartOptions
+    , toBars
     )
 
 --------------------------------------------------------------------------------

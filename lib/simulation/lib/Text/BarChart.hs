@@ -9,10 +9,10 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE LambdaCase #-}
 
-module Data.Distribution where
+module Text.BarChart where
 
 import Data.Bag
     ( Bag
@@ -54,7 +54,8 @@ import qualified Prelude
     ( maximum
     )
 import Successor
-    ( Successor, successor
+    ( Successor
+    , successor
     )
 import qualified Text.Bar as Bar
 import Text.Colour

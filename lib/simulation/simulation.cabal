@@ -79,7 +79,6 @@ library
     , unicode-show
   exposed-modules:
       Data.Bag
-      Data.Distribution
       Data.Distribution.Log
       Deriving
       Fraction
@@ -95,6 +94,7 @@ library
       Simulation.Test.Chart
       Successor
       Text.Bar
+      Text.BarChart
       Text.Colour
       Text.Label
 

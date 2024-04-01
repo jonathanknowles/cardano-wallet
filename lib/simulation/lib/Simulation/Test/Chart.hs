@@ -41,10 +41,6 @@ import Control.Monad.Random.Class
 import Data.Bag
     ( Count (Count)
     )
-import Data.Distribution
-    ( Distribution
-    )
-import qualified Data.Distribution as Distribution
 import Data.List
     ( scanl'
     )
@@ -62,6 +58,10 @@ import Optics.Core
     )
 import System.Random.Shuffle
     ( shuffleM
+    )
+import qualified Text.BarChart as Distribution
+import Text.BarChart
+    ( Distribution
     )
 import Text.Printf
     ( printf

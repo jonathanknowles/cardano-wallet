@@ -25,14 +25,6 @@ import Data.Bag
     ( Count (Count)
     , (×)
     )
-import Data.Distribution
-    ( BarChartOptions (..)
-    , BarLengthConfig (BarLengthScale)
-    , Distribution
-    , defaultBarChartOptions
-    , fromUnaryList
-    , toBars
-    )
 import Data.Ratio
     ( (%)
     )
@@ -77,6 +69,14 @@ import Test.QuickCheck.Extra
     ( GenCount (GenCount)
     , GenSize (GenSize)
     , arbitrarySampleList
+    )
+import Text.BarChart
+    ( BarChartOptions (..)
+    , BarLengthConfig (BarLengthScale)
+    , Distribution
+    , defaultBarChartOptions
+    , fromUnaryList
+    , toBars
     )
 
 genAction :: Gen Action
