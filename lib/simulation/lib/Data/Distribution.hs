@@ -10,6 +10,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE BangPatterns #-}
 
 module Data.Distribution where
 
@@ -53,7 +54,7 @@ import qualified Prelude
     ( maximum
     )
 import Successor
-    ( Successor
+    ( Successor, successor
     )
 import qualified Text.Bar as Bar
 import Text.Colour
@@ -82,7 +83,18 @@ fromList :: Ord a => [Count a] -> Distribution a
 fromList = coerce Bag.fromCountList
 
 toList :: (Ord a, Successor a) => Distribution a -> [Count a]
-toList = coerce Bag.toDenseCountList
+toList = toDenseCountList
+  where
+    toDenseCountList :: (Ord a, Successor a) => Distribution a -> [Count a]
+    toDenseCountList b =
+        maybe [] (uncurry toDenseCountListWithBounds) (bounds b)
+      where
+        toDenseCountListWithBounds lo hi =
+            (`count` b) <$> from lo
+          where
+            from !x
+                | x > hi = []
+                | otherwise = x : maybe [] from (successor x)
 
 empty :: Ord a => Distribution a
 empty = coerce Bag.empty

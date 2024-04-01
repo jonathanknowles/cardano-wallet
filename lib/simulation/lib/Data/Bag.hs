@@ -57,9 +57,6 @@ import GHC.IsList
 import Numeric.Natural
     ( Natural
     )
-import Successor
-    ( Successor (successor)
-    )
 
 newtype Bag a = Bag (MonoidMap a (Sum Natural))
     deriving stock Eq
@@ -133,17 +130,6 @@ fromCountList :: Ord a => [Count a] -> Bag a
 fromCountList = Bag . MonoidMap.fromList . fmap fromMultiple
   where
     fromMultiple (Count n a) = (a, Sum n)
-
-toDenseCountList :: (Ord a, Successor a) => Bag a -> [Count a]
-toDenseCountList b =
-    maybe [] (uncurry toDenseCountListWithBounds) (bounds b)
-  where
-    toDenseCountListWithBounds lo hi =
-        (`count` b) <$> from lo
-      where
-        from !x
-            | x > hi = []
-            | otherwise = x : maybe [] from (successor x)
 
 toCountList :: Bag a -> [Count a]
 toCountList (Bag s) = fmap toMultiple . MonoidMap.toList $ s
