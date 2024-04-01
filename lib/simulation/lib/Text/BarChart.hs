@@ -1,16 +1,16 @@
 {-# HLINT ignore "Avoid restricted alias" #-}
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE NoFieldSelectors #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
-{-# LANGUAGE BangPatterns #-}
-{-# LANGUAGE LambdaCase #-}
 
 module Text.BarChart where
 
@@ -84,18 +84,18 @@ fromList :: Ord a => [Count a] -> Distribution a
 fromList = coerce Bag.fromCountList
 
 toList :: (Ord a, Successor a) => Distribution a -> [Count a]
-toList = toDenseCountList
+toList = coerce toDenseCountList
+
+toDenseCountList :: (Ord a, Successor a) => Bag a -> [Count a]
+toDenseCountList b =
+    maybe [] (uncurry toDenseCountListWithBounds) (Bag.bounds b)
   where
-    toDenseCountList :: (Ord a, Successor a) => Distribution a -> [Count a]
-    toDenseCountList b =
-        maybe [] (uncurry toDenseCountListWithBounds) (bounds b)
+    toDenseCountListWithBounds lo hi =
+        (`Bag.count` b) <$> from lo
       where
-        toDenseCountListWithBounds lo hi =
-            (`count` b) <$> from lo
-          where
-            from !x
-                | x > hi = []
-                | otherwise = x : maybe [] from (successor x)
+        from !x
+            | x > hi = []
+            | otherwise = x : maybe [] from (successor x)
 
 empty :: Ord a => Distribution a
 empty = coerce Bag.empty
@@ -161,7 +161,7 @@ toBars
     :: forall a. (Ord a, Successor a)
     => BarChartOptions
     -> (a -> Label)
-    -> Distribution a
+    -> Bag a
     -> [Text]
 toBars BarChartOptions {colours, resolution, scale} toLabel d = mconcat
     [ [ Text.replicate (labelColumnWidth + 1) " " <> topLeftCorner ]
@@ -178,7 +178,7 @@ toBars BarChartOptions {colours, resolution, scale} toLabel d = mconcat
     counts = (\(Count n _) -> n) <$> labelCountPairs
 
     labelCountPairs :: [Count a]
-    labelCountPairs = toList d
+    labelCountPairs = toDenseCountList d
 
     labels :: [Text]
     labels

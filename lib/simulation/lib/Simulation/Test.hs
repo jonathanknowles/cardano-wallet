@@ -22,9 +22,11 @@ import Control.Monad.Random.Class
     ( MonadRandom
     )
 import Data.Bag
-    ( Count (Count)
+    ( Bag
+    , Count (Count)
     , (×)
     )
+import qualified Data.Bag as Bag
 import Data.Ratio
     ( (%)
     )
@@ -73,9 +75,7 @@ import Test.QuickCheck.Extra
 import Text.BarChart
     ( BarChartOptions (..)
     , BarLengthConfig (BarLengthScale)
-    , Distribution
     , defaultBarChartOptions
-    , fromUnaryList
     , toBars
     )
 
@@ -209,8 +209,8 @@ exampleDistribution =
         Interval.toLabel
         distribution
   where
-    distribution :: Distribution Interval
-    distribution = fromUnaryList intervals
+    distribution :: Bag Interval
+    distribution = Bag.fromUnaryList intervals
 
     intervals :: [Interval]
     intervals = Interval.fromNatural (IntervalWidth 20_000) <$> values

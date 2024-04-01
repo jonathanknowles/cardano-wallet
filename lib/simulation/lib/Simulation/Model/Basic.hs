@@ -73,10 +73,8 @@ import qualified Interval
 import Numeric.Natural
     ( Natural
     )
-import qualified Text.BarChart as Distribution
 import Text.BarChart
-    ( Distribution
-    , defaultBarChartOptions
+    ( defaultBarChartOptions
     , toBars
     )
 
@@ -188,9 +186,9 @@ txIsBalanced tx =
 valueOfAsset :: Asset -> Value -> Count Asset
 valueOfAsset a (Value v) = Bag.count a v
 
-walletDistribution :: IntervalWidth -> Wallet -> Distribution Interval
+walletDistribution :: IntervalWidth -> Wallet -> Bag Interval
 walletDistribution intervalWidth w =
-    Distribution.fromUnaryList intervals
+    Bag.fromUnaryList intervals
   where
     intervals :: [Interval]
     intervals = Interval.fromNatural intervalWidth <$> lovelaceValues
