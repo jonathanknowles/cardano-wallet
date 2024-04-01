@@ -95,7 +95,7 @@ barDataFromDistribution d = BarData values rowLabels columnLabels
     values
         = (: [])
         . fmap (\(Count n _) -> fromIntegral @Natural @Double n)
-        $ Distribution.toListWithBounds 0 16 d
+        $ Distribution.toList d
 
     rowLabels :: [Text]
     rowLabels = Text.pack . show @Natural <$> [0 .. 16]
