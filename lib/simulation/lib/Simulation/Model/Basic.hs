@@ -73,10 +73,7 @@ import qualified Interval
 import Numeric.Natural
     ( Natural
     )
-import Text.BarChart
-    ( defaultBarChartOptions
-    , toBars
-    )
+import qualified Text.BarChart as BarChart
 
 --------------------------------------------------------------------------------
 -- Types
@@ -199,7 +196,7 @@ walletDistribution intervalWidth w =
 printWalletDistribution :: IntervalWidth -> Wallet -> IO ()
 printWalletDistribution intervalWidth w =
     mapM_ Text.putStrLn $
-    toBars defaultBarChartOptions Interval.toLabel $
+    BarChart.render BarChart.defaultConfig Interval.toLabel $
     walletDistribution intervalWidth w
 
 walletLogDistribution :: Wallet -> LogDistribution

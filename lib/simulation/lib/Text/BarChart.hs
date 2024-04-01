@@ -11,7 +11,13 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
-module Text.BarChart where
+module Text.BarChart
+    ( Config (..)
+    , Resolution (..)
+    , Scale (..)
+    , defaultConfig
+    , render
+    ) where
 
 import Data.Bag
     ( Bag
@@ -55,66 +61,41 @@ import Text.Label
     ( Label
     )
 
-toDenseCountList :: (Ord a, Successor a) => Bag a -> [Count a]
-toDenseCountList b =
-    maybe [] (uncurry toDenseCountListWithBounds) (Bag.bounds b)
-  where
-    toDenseCountListWithBounds lo hi =
-        (`Bag.count` b) <$> from lo
-      where
-        from !x
-            | x > hi = []
-            | otherwise = x : maybe [] from (successor x)
+--------------------------------------------------------------------------------
+-- Public
+--------------------------------------------------------------------------------
 
-topLeftCorner :: Text
-topLeftCorner = "┌"
-
-bottomLeftCorner :: Text
-bottomLeftCorner = "└"
-
-topLeftCornerRounded :: Text
-topLeftCornerRounded = "╭"
-
-bottomLeftCornerRounded :: Text
-bottomLeftCornerRounded = "╰"
-
-data BarLengthConfig
-    = BarLengthScale (Ratio Natural)
-    | BarLengthLimit Natural
-    deriving (Eq, Show)
-
-data BarChartOptions = BarChartOptions
-    { colours :: NonEmpty Colour
-    , resolution :: BarChartResolution
-    , scale :: BarLengthConfig
+data Config = Config
+    { barColours :: NonEmpty Colour
+    , barResolution :: Resolution
+    , barScale :: Scale
     }
 
-data BarChartResolution
-    = BarChartResolution1
-    | BarChartResolution2
-    | BarChartResolution8
+data Resolution
+    = Resolution1
+    | Resolution2
+    | Resolution8
     deriving (Eq, Show)
 
-defaultBarChartOptions :: BarChartOptions
-defaultBarChartOptions = BarChartOptions
-    { colours = Green :| [Red]
-    , resolution = BarChartResolution2
-    , scale = BarLengthScale (1 % 2)
+data Scale
+    = ScaleMultiplier (Ratio Natural)
+    | ScaleLimit Natural
+    deriving (Eq, Show)
+
+defaultConfig :: Config
+defaultConfig = Config
+    { barColours = Green :| [Red]
+    , barResolution = Resolution2
+    , barScale = ScaleMultiplier (1 % 2)
     }
 
-convertResolution :: BarChartResolution -> Bar.LengthResolution
-convertResolution = \case
-    BarChartResolution1 -> Bar.LengthResolution1
-    BarChartResolution2 -> Bar.LengthResolution2
-    BarChartResolution8 -> Bar.LengthResolution8
-
-toBars
+render
     :: forall a. (Ord a, Successor a)
-    => BarChartOptions
+    => Config
     -> (a -> Label)
     -> Bag a
     -> [Text]
-toBars BarChartOptions {colours, resolution, scale} toLabel d = mconcat
+render Config {barColours, barResolution, barScale} toLabel d = mconcat
     [ [ Text.replicate (labelColumnWidth + 1) " " <> topLeftCorner ]
     , [ toBar colour label n
       | (colour, label, n) <- zip3 colourSequence labelsPadded counts
@@ -123,7 +104,7 @@ toBars BarChartOptions {colours, resolution, scale} toLabel d = mconcat
     ]
   where
     colourSequence :: [Colour]
-    colourSequence = NonEmpty.toList $ NonEmpty.cycle colours
+    colourSequence = NonEmpty.toList $ NonEmpty.cycle barColours
 
     counts :: [Natural]
     counts = (\(Count n _) -> n) <$> labelCountPairs
@@ -151,14 +132,47 @@ toBars BarChartOptions {colours, resolution, scale} toLabel d = mconcat
         label
         <> " ┤"
         <> withColour colour
-            (Bar.fromRational barResolution Bar.LengthRoundDown barWidth)
+            (Bar.fromRational lengthResolution Bar.LengthRoundDown barWidth)
         <> " "
         <> Text.pack (show n)
       where
-        barResolution :: Bar.LengthResolution
-        barResolution = convertResolution resolution
+        lengthResolution :: Bar.LengthResolution
+        lengthResolution = convertResolution barResolution
 
         barWidth :: Ratio Natural
-        barWidth = case scale of
-            BarLengthLimit a -> (a % 1)
-            BarLengthScale r -> (n % 1) * r
+        barWidth = case barScale of
+            ScaleLimit a -> (a % 1)
+            ScaleMultiplier r -> (n % 1) * r
+
+--------------------------------------------------------------------------------
+-- Internal
+--------------------------------------------------------------------------------
+
+toDenseCountList :: (Ord a, Successor a) => Bag a -> [Count a]
+toDenseCountList b =
+    maybe [] (uncurry toDenseCountListWithBounds) (Bag.bounds b)
+  where
+    toDenseCountListWithBounds lo hi =
+        (`Bag.count` b) <$> from lo
+      where
+        from !x
+            | x > hi = []
+            | otherwise = x : maybe [] from (successor x)
+
+topLeftCorner :: Text
+topLeftCorner = "┌"
+
+bottomLeftCorner :: Text
+bottomLeftCorner = "└"
+
+_topLeftCornerRounded :: Text
+_topLeftCornerRounded = "╭"
+
+_bottomLeftCornerRounded :: Text
+_bottomLeftCornerRounded = "╰"
+
+convertResolution :: Resolution -> Bar.LengthResolution
+convertResolution = \case
+    Resolution1 -> Bar.LengthResolution1
+    Resolution2 -> Bar.LengthResolution2
+    Resolution8 -> Bar.LengthResolution8

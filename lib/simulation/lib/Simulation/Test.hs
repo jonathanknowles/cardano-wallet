@@ -72,12 +72,7 @@ import Test.QuickCheck.Extra
     , GenSize (GenSize)
     , arbitrarySampleList
     )
-import Text.BarChart
-    ( BarChartOptions (..)
-    , BarLengthConfig (BarLengthScale)
-    , defaultBarChartOptions
-    , toBars
-    )
+import qualified Text.BarChart as BarChart
 
 genAction :: Gen Action
 genAction =
@@ -202,9 +197,9 @@ genFinalWallet = do
 exampleDistribution :: Text
 exampleDistribution =
     Text.unlines $
-    toBars
-        defaultBarChartOptions
-            { scale = BarLengthScale (1%840)
+    BarChart.render
+        BarChart.defaultConfig
+            { BarChart.barScale = BarChart.ScaleMultiplier (1%840)
             }
         Interval.toLabel
         distribution
