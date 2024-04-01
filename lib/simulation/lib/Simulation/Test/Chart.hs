@@ -39,8 +39,10 @@ import Control.Monad.Random.Class
     ( MonadRandom
     )
 import Data.Bag
-    ( Count (Count)
+    ( Bag
+    , Count (Count)
     )
+import qualified Data.Bag as Bag
 import Data.List
     ( scanl'
     )
@@ -58,10 +60,6 @@ import Optics.Core
     )
 import System.Random.Shuffle
     ( shuffleM
-    )
-import qualified Text.BarChart as Distribution
-import Text.BarChart
-    ( Distribution
     )
 import Text.Printf
     ( printf
@@ -85,17 +83,17 @@ every n xs =
         y : ys -> y : every n ys
         [] -> []
 
-distributionsFromValues :: [Natural] -> [Distribution Natural]
-distributionsFromValues = drop 1 . scanl' (flip Distribution.insert) mempty
+distributionsFromValues :: [Natural] -> [Bag Natural]
+distributionsFromValues = drop 1 . scanl' (flip Bag.insert) mempty
 
-barDataFromDistribution :: Distribution Natural -> BarData
+barDataFromDistribution :: Bag Natural -> BarData
 barDataFromDistribution d = BarData values rowLabels columnLabels
   where
     values :: [[Double]]
     values
         = (: [])
         . fmap (\(Count n _) -> fromIntegral @Natural @Double n)
-        $ Distribution.toList d
+        $ Bag.toCountList d
 
     rowLabels :: [Text]
     rowLabels = Text.pack . show @Natural <$> [0 .. 16]

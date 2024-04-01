@@ -3,7 +3,6 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE NamedFieldPuns #-}
 {-# LANGUAGE NoFieldSelectors #-}
@@ -19,9 +18,6 @@ import Data.Bag
     , Count (Count)
     )
 import qualified Data.Bag as Bag
-import Data.Coerce
-    ( coerce
-    )
 import Data.List.NonEmpty
     ( NonEmpty ((:|))
     )
@@ -34,14 +30,6 @@ import Data.Text
     ( Text
     )
 import qualified Data.Text as Text
-import Deriving
-    ( AsList (AsList)
-    , Prefix (Prefix)
-    )
-import GHC.IsList
-    ( IsList (Item)
-    )
-import qualified GHC.IsList as IsList
 import Numeric.Natural
     ( Natural
     )
@@ -67,25 +55,6 @@ import Text.Label
     ( Label
     )
 
-newtype Distribution a = Distribution (Bag a)
-    deriving stock Eq
-    deriving Show via Prefix "Distribution" (AsList (Distribution a))
-    deriving newtype (Semigroup, Monoid)
-
-instance (Ord a, Successor a) => IsList (Distribution a) where
-    type Item (Distribution a) = Count a
-    fromList = fromList
-    toList = toList
-
-fromUnaryList :: Ord a => [a] -> Distribution a
-fromUnaryList = coerce Bag.fromUnaryList
-
-fromList :: Ord a => [Count a] -> Distribution a
-fromList = coerce Bag.fromCountList
-
-toList :: (Ord a, Successor a) => Distribution a -> [Count a]
-toList = coerce toDenseCountList
-
 toDenseCountList :: (Ord a, Successor a) => Bag a -> [Count a]
 toDenseCountList b =
     maybe [] (uncurry toDenseCountListWithBounds) (Bag.bounds b)
@@ -96,24 +65,6 @@ toDenseCountList b =
         from !x
             | x > hi = []
             | otherwise = x : maybe [] from (successor x)
-
-empty :: Ord a => Distribution a
-empty = coerce Bag.empty
-
-bounds :: Distribution a -> Maybe (a, a)
-bounds = coerce Bag.bounds
-
-insert :: Ord a => a -> Distribution a -> Distribution a
-insert = coerce Bag.insert
-
-minimum :: Distribution a -> Maybe a
-minimum = coerce Bag.minimum
-
-maximum :: Distribution a -> Maybe a
-maximum = coerce Bag.maximum
-
-count :: Ord a => a -> Distribution a -> Count a
-count = coerce Bag.count
 
 topLeftCorner :: Text
 topLeftCorner = "┌"
